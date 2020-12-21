@@ -99,7 +99,7 @@ task := pipeline.TaskFunc(func(ctx context.Context, data pipeline.Data) (pipelin
     var val int
     s := data.(*stringData)
 
-	switch s {
+	switch s.String() {
     case "one":
         val = 1
     case "two":
@@ -108,8 +108,8 @@ task := pipeline.TaskFunc(func(ctx context.Context, data pipeline.Data) (pipelin
         var = 3
     }
 
-    data.val = fmt.Sprintf("%s - %d", s, val)
-	return data, nil
+    data.val = fmt.Sprintf("%s - %d", s.String(), val)
+    return data, nil
 })
 
 stage := pipeline.FIFO(task)
