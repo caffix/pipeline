@@ -3,15 +3,16 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"sync"
 )
 
 type parallel struct {
 	tasks []Task
 }
 
-// Parallel returns a Stage that passes a copy of each incoming data
-// to all specified tasks and emits their outputs to the next stage.
+// Parallel returns a Stage that passes a copy of each incoming Data
+// to all specified tasks, waits for all the tasks to finish before
+// sending data to the next stage, and only passes the original Data
+// through to the following stage.
 func Parallel(tasks ...Task) Stage {
 	if len(tasks) == 0 {
 		return nil
@@ -22,9 +23,8 @@ func Parallel(tasks ...Task) Stage {
 
 // Run implements Stage.
 func (p *parallel) Run(ctx context.Context, sp StageParams) {
+loop:
 	for {
-		var wg sync.WaitGroup
-
 		select {
 		case <-ctx.Done():
 			return
@@ -33,21 +33,28 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 				return
 			}
 
+			done := make(chan Data, len(p.tasks))
 			for i := 0; i < len(p.tasks); i++ {
-				wg.Add(1)
-				go func(idx int) {
-					defer wg.Done()
-
-					d, err := p.tasks[idx].Process(ctx, data.Clone())
+				go func(idx int, clone Data) {
+					d, err := p.tasks[idx].Process(ctx, clone)
 					if err != nil {
 						sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 					}
-					if d != nil {
-						sp.Output() <- d
-					}
-				}(i)
+					clone.MarkAsProcessed()
+					done <- d
+				}(i, data.Clone())
 			}
-			wg.Wait()
+
+			var failed bool
+			for i := 0; i < len(p.tasks); i++ {
+				if d := <-done; d == nil {
+					failed = true
+				}
+			}
+			if failed {
+				data.MarkAsProcessed()
+				continue loop
+			}
 
 			select {
 			case <-ctx.Done():
