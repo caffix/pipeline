@@ -95,7 +95,7 @@ The stage execution strategies can be combined to form desired pipelines. A Stag
 
 ```golang
 // TaskFunc is defined as a function with a Process method that calls the function
-task := pipeline.TaskFunc(func(ctx context.Context, data pipeline.Data) (pipeline.Data, error) {
+task := pipeline.TaskFunc(func(ctx context.Context, data pipeline.Data, tp pipeline.TaskParams) (pipeline.Data, error) {
     var val int
     s := data.(*stringData)
 
@@ -112,7 +112,7 @@ task := pipeline.TaskFunc(func(ctx context.Context, data pipeline.Data) (pipelin
     return data, nil
 })
 
-stage := pipeline.FIFO(task)
+stage := pipeline.FIFO("", task)
 ```
 
 ### Executing the Pipeline
@@ -139,14 +139,6 @@ No logging is built into this pipeline implementation and this could be quite us
 
 It would be helpful to have the ability to monitor stage and task performance such as how long each is taking to execute, the number of Data instances processes, the number of successes and failures, etc.
 
-### Stage and Task Retries
-
-It could be useful to have optional retries for stages and tasks.
-
-### Messaging to Stages and Tasks
-
-It could be helpful to support event-driven communication between tasks. This could allow Data to be sent to specified stages.
-
 ### Task Implementations for Common Use Cases
 
 This pipeline implementation is very abstract, which allows users to perform nearly any set of steps. Currently, users must implement their own tasks. Some tasks are very common and the project could build support for such activities. For example, executing a script pulled from a Git repo.
@@ -155,7 +147,7 @@ This pipeline implementation is very abstract, which allows users to perform nea
 
 As the implementation becomes from complex, it could be helpful to support the use of configuration files and reduce the level of effort necessary to build a pipeline. For example, the configuration file could specify when tasks should be output to alternative stages.
 
-### Develop Additional Stage Execute Strategies
+### Develop Additional Stage Execution Strategies
 
 While the current execution strategies work for many use cases, there could be opportunities to develop additional stage types that ease pipeline development.
 
