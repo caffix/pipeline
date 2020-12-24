@@ -6,14 +6,23 @@ import (
 )
 
 type fifo struct {
+	id   string
 	task Task
 }
 
 // FIFO returns a Stage that processes incoming data in a first-in first-out
 // fashion. Each input is passed to the specified Task and its output
 // is emitted to the next Stage.
-func FIFO(task Task) Stage {
-	return fifo{task: task}
+func FIFO(id string, task Task) Stage {
+	return fifo{
+		id:   id,
+		task: task,
+	}
+}
+
+// ID implements Stage.
+func (r fifo) ID() string {
+	return r.id
 }
 
 // Run implements Stage.
@@ -27,7 +36,12 @@ func (r fifo) Run(ctx context.Context, sp StageParams) {
 				return
 			}
 
-			dataOut, err := r.task.Process(ctx, dataIn)
+			tp := &taskParams{
+				newdata:   sp.NewData(),
+				processed: sp.ProcessedData(),
+				registry:  sp.Registry(),
+			}
+			dataOut, err := r.task.Process(ctx, dataIn, tp)
 			if err != nil {
 				sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 				return
@@ -35,6 +49,7 @@ func (r fifo) Run(ctx context.Context, sp StageParams) {
 			// If the task did not output data for the
 			// next stage there is nothing we need to do
 			if dataOut == nil {
+				sp.ProcessedData() <- dataIn
 				dataIn.MarkAsProcessed()
 				continue
 			}

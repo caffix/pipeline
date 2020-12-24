@@ -6,6 +6,7 @@ import (
 )
 
 type parallel struct {
+	id    string
 	tasks []Task
 }
 
@@ -13,12 +14,20 @@ type parallel struct {
 // to all specified tasks, waits for all the tasks to finish before
 // sending data to the next stage, and only passes the original Data
 // through to the following stage.
-func Parallel(tasks ...Task) Stage {
+func Parallel(id string, tasks ...Task) Stage {
 	if len(tasks) == 0 {
 		return nil
 	}
 
-	return &parallel{tasks: tasks}
+	return &parallel{
+		id:    id,
+		tasks: tasks,
+	}
+}
+
+// ID implements Stage.
+func (p *parallel) ID() string {
+	return p.id
 }
 
 // Run implements Stage.
@@ -35,14 +44,25 @@ loop:
 
 			done := make(chan Data, len(p.tasks))
 			for i := 0; i < len(p.tasks); i++ {
+				c := data.Clone()
+
+				sp.NewData() <- c
 				go func(idx int, clone Data) {
-					d, err := p.tasks[idx].Process(ctx, clone)
+					tp := &taskParams{
+						newdata:   sp.NewData(),
+						processed: sp.ProcessedData(),
+						registry:  sp.Registry(),
+					}
+
+					d, err := p.tasks[idx].Process(ctx, clone, tp)
 					if err != nil {
 						sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 					}
+
+					sp.ProcessedData() <- clone
 					clone.MarkAsProcessed()
 					done <- d
-				}(i, data.Clone())
+				}(i, c)
 			}
 
 			var failed bool
@@ -52,6 +72,7 @@ loop:
 				}
 			}
 			if failed {
+				sp.ProcessedData() <- data
 				data.MarkAsProcessed()
 				continue loop
 			}

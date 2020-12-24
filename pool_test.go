@@ -11,7 +11,7 @@ func TestFixedWorkerPool(t *testing.T) {
 	syncCh := make(chan struct{})
 	rendezvousCh := make(chan struct{})
 
-	task := TaskFunc(func(_ context.Context, _ Data) (Data, error) {
+	task := TaskFunc(func(_ context.Context, _ Data, _ TaskParams) (Data, error) {
 		// Signal that we have reached the sync point and wait for the
 		// green light to proceed by the test code
 		syncCh <- struct{}{}
@@ -21,7 +21,7 @@ func TestFixedWorkerPool(t *testing.T) {
 
 	src := &sourceStub{data: stringDataValues(num)}
 
-	p := NewPipeline(FixedPool(task, num))
+	p := NewPipeline(FixedPool("", task, num))
 	doneCh := make(chan struct{})
 	go func() {
 		if err := p.Execute(context.TODO(), src, nil); err != nil {
@@ -54,7 +54,7 @@ func TestDynamicWorkerPool(t *testing.T) {
 	syncCh := make(chan struct{}, num)
 	rendezvousCh := make(chan struct{})
 
-	task := TaskFunc(func(_ context.Context, _ Data) (Data, error) {
+	task := TaskFunc(func(_ context.Context, _ Data, _ TaskParams) (Data, error) {
 		// Signal that we have reached the sync point and wait for the
 		// green light to proceed by the test code
 		syncCh <- struct{}{}
@@ -64,7 +64,7 @@ func TestDynamicWorkerPool(t *testing.T) {
 
 	src := &sourceStub{data: stringDataValues(num * 2)}
 
-	p := NewPipeline(DynamicPool(task, num))
+	p := NewPipeline(DynamicPool("", task, num))
 	doneCh := make(chan struct{})
 	go func() {
 		if err := p.Execute(context.TODO(), src, nil); err != nil {

@@ -7,22 +7,31 @@ import (
 )
 
 type fixedPool struct {
+	id    string
 	fifos []Stage
 }
 
 // FixedPool returns a Stage that spins up a pool containing numWorkers
 // to process incoming data in parallel and emit their outputs to the next stage.
-func FixedPool(task Task, num int) Stage {
+func FixedPool(id string, task Task, num int) Stage {
 	if num <= 0 {
 		return nil
 	}
 
 	fifos := make([]Stage, num)
 	for i := 0; i < num; i++ {
-		fifos[i] = FIFO(task)
+		fifos[i] = FIFO("", task)
 	}
 
-	return &fixedPool{fifos: fifos}
+	return &fixedPool{
+		id:    id,
+		fifos: fifos,
+	}
+}
+
+// ID implements Stage.
+func (p *fixedPool) ID() string {
+	return p.id
 }
 
 // Run implements Stage.
@@ -42,6 +51,7 @@ func (p *fixedPool) Run(ctx context.Context, params StageParams) {
 }
 
 type dynamicPool struct {
+	id        string
 	task      Task
 	tokenPool chan struct{}
 }
@@ -49,7 +59,7 @@ type dynamicPool struct {
 // DynamicPool returns a Stage that maintains a dynamic pool that can scale
 // up to max parallel tasks for processing incoming inputs in parallel and
 // emitting their outputs to the next stage.
-func DynamicPool(task Task, max int) Stage {
+func DynamicPool(id string, task Task, max int) Stage {
 	if max <= 0 {
 		return nil
 	}
@@ -59,7 +69,16 @@ func DynamicPool(task Task, max int) Stage {
 		tokenPool <- struct{}{}
 	}
 
-	return &dynamicPool{task: task, tokenPool: tokenPool}
+	return &dynamicPool{
+		id:        id,
+		task:      task,
+		tokenPool: tokenPool,
+	}
+}
+
+// ID implements Stage.
+func (p *dynamicPool) ID() string {
+	return p.id
 }
 
 // Run implements Stage.
@@ -83,7 +102,13 @@ loop:
 
 			go func(dataIn Data, token struct{}) {
 				defer func() { p.tokenPool <- token }()
-				dataOut, err := p.task.Process(ctx, dataIn)
+				tp := &taskParams{
+					newdata:   sp.NewData(),
+					processed: sp.ProcessedData(),
+					registry:  sp.Registry(),
+				}
+
+				dataOut, err := p.task.Process(ctx, dataIn, tp)
 				if err != nil {
 					sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 					return
@@ -92,14 +117,15 @@ loop:
 				// If the task did not output data for the
 				// next stage there is nothing we need to do.
 				if dataOut == nil {
+					sp.ProcessedData() <- dataIn
 					dataIn.MarkAsProcessed()
 					return
 				}
 
 				// Output processed data
 				select {
-				case sp.Output() <- dataOut:
 				case <-ctx.Done():
+				case sp.Output() <- dataOut:
 				}
 			}(dataIn, token)
 		}

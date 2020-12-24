@@ -83,7 +83,7 @@ func TestDataDiscarding(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(3)}
 	sink := &sinkStub{}
 
-	p := NewPipeline(testStage{
+	p := NewPipeline(&testStage{
 		t:        t,
 		dropData: true,
 	})
@@ -92,6 +92,39 @@ func TestDataDiscarding(t *testing.T) {
 	}
 	if len(sink.data) != 0 {
 		t.Errorf("Expected all data to be discarded by stage task")
+	}
+
+	assertAllProcessed(t, src.data)
+}
+
+func TestStageRegistry(t *testing.T) {
+	src := &sourceStub{data: stringDataValues(1)}
+	sink := &sinkStub{}
+
+	max := 3
+	var count int
+	task := TaskFunc(func(_ context.Context, data Data, tp TaskParams) (Data, error) {
+		count++
+		if count > max {
+			return data, nil
+		}
+
+		c := data.Clone()
+		tp.NewData() <- c
+		go func(d Data) {
+			r := tp.Registry()
+			r["counter"] <- d
+		}(c)
+
+		return data, nil
+	})
+
+	p := NewPipeline(FIFO("counter", task))
+	if err := p.Execute(context.TODO(), src, sink); err != nil {
+		t.Errorf("Error executing the Pipeline: %v", err)
+	}
+	if c := count - 1; c != max {
+		t.Errorf("Retry count does not match expected value.\nWanted:%v\nGot:%v\n", max, c)
 	}
 
 	assertAllProcessed(t, src.data)
@@ -106,9 +139,14 @@ func assertAllProcessed(t *testing.T, data []Data) {
 }
 
 type testStage struct {
+	id       string
 	t        *testing.T
 	dropData bool
 	err      error
+}
+
+func (s testStage) ID() string {
+	return s.id
 }
 
 func (s testStage) Run(ctx context.Context, sp StageParams) {
@@ -132,6 +170,7 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 
 			if s.dropData {
 				s.t.Logf("[stage %d] dropping data: %v", sp.Position(), d)
+				sp.ProcessedData() <- d
 				d.MarkAsProcessed()
 				continue
 			}
@@ -156,14 +195,11 @@ func (s *sourceStub) Next(context.Context) bool {
 	if s.err != nil || s.index == len(s.data) {
 		return false
 	}
-
 	s.index++
 	return true
 }
 func (s *sourceStub) Error() error { return s.err }
-func (s *sourceStub) Data() Data {
-	return s.data[s.index-1]
-}
+func (s *sourceStub) Data() Data   { return s.data[s.index-1] }
 
 type sinkStub struct {
 	data []Data

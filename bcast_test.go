@@ -18,7 +18,7 @@ func TestBroadcast(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(1)}
 	sink := new(sinkStub)
 
-	p := NewPipeline(Broadcast(tasks...))
+	p := NewPipeline(Broadcast("", tasks...))
 	if err := p.Execute(context.TODO(), src, sink); err != nil {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestBroadcast(t *testing.T) {
 }
 
 func makeMutatingTask(index int) Task {
-	return TaskFunc(func(_ context.Context, d Data) (Data, error) {
+	return TaskFunc(func(_ context.Context, d Data, _ TaskParams) (Data, error) {
 		// Mutate data to check that each task got a copy
 		sd := d.(*stringData)
 		sd.val = fmt.Sprintf("%s_%d", sd.val, index)

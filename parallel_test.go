@@ -14,9 +14,8 @@ func TestParallel(t *testing.T) {
 	var m sync.Mutex
 	tasks := make([]Task, num)
 	for i := 0; i < num; i++ {
-		tasks[i] = TaskFunc(func(_ context.Context, d Data) (Data, error) {
+		tasks[i] = TaskFunc(func(_ context.Context, d Data, _ TaskParams) (Data, error) {
 			time.Sleep(time.Second)
-			d.MarkAsProcessed()
 			m.Lock()
 			count++
 			m.Unlock()
@@ -25,7 +24,7 @@ func TestParallel(t *testing.T) {
 	}
 
 	// Check that all previous tasks have completed
-	checker := TaskFunc(func(_ context.Context, d Data) (Data, error) {
+	checker := TaskFunc(func(_ context.Context, d Data, _ TaskParams) (Data, error) {
 		var c int
 
 		m.Lock()
@@ -40,7 +39,7 @@ func TestParallel(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(1)}
 	sink := new(sinkStub)
 
-	p := NewPipeline(Parallel(tasks...), FIFO(checker))
+	p := NewPipeline(Parallel("", tasks...), FIFO("", checker))
 	if err := p.Execute(context.TODO(), src, sink); err != nil {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}

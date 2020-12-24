@@ -6,22 +6,31 @@ import (
 )
 
 type broadcast struct {
+	id    string
 	fifos []Stage
 }
 
 // Broadcast returns a Stage that passes a copy of each incoming data
 // to all specified tasks and emits their outputs to the next stage.
-func Broadcast(tasks ...Task) Stage {
+func Broadcast(id string, tasks ...Task) Stage {
 	if len(tasks) == 0 {
 		return nil
 	}
 
 	fifos := make([]Stage, len(tasks))
 	for i, t := range tasks {
-		fifos[i] = FIFO(t)
+		fifos[i] = FIFO("", t)
 	}
 
-	return &broadcast{fifos: fifos}
+	return &broadcast{
+		id:    id,
+		fifos: fifos,
+	}
+}
+
+// ID implements Stage.
+func (b *broadcast) ID() string {
+	return b.id
 }
 
 // Run implements Stage.
@@ -34,14 +43,16 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 	for i := 0; i < len(b.fifos); i++ {
 		wg.Add(1)
 		inCh[i] = make(chan Data)
-		go func(fifoIndex int) {
-			fifoParams := &params{
-				stage:    sp.Position(),
-				inCh:     inCh[fifoIndex],
-				outCh:    sp.Output(),
-				errQueue: sp.Error(),
-			}
-			b.fifos[fifoIndex].Run(ctx, fifoParams)
+		go func(idx int) {
+			b.fifos[idx].Run(ctx, &params{
+				stage:     sp.Position(),
+				inCh:      inCh[idx],
+				outCh:     sp.Output(),
+				errQueue:  sp.Error(),
+				newdata:   sp.NewData(),
+				processed: sp.ProcessedData(),
+				registry:  sp.Registry(),
+			})
 			wg.Done()
 		}(i)
 	}
@@ -63,6 +74,7 @@ loop:
 				var fifoData = data
 				if i != 0 {
 					fifoData = data.Clone()
+					sp.NewData() <- fifoData
 				}
 				select {
 				case <-ctx.Done():

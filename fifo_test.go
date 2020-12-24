@@ -9,7 +9,7 @@ import (
 func TestFIFO(t *testing.T) {
 	stages := make([]Stage, 10)
 	for i := 0; i < len(stages); i++ {
-		stages[i] = FIFO(makePassthroughTask())
+		stages[i] = FIFO("", makePassthroughTask())
 	}
 
 	src := &sourceStub{data: stringDataValues(3)}
@@ -27,7 +27,7 @@ func TestFIFO(t *testing.T) {
 }
 
 func makePassthroughTask() Task {
-	return TaskFunc(func(_ context.Context, data Data) (Data, error) {
+	return TaskFunc(func(_ context.Context, data Data, _ TaskParams) (Data, error) {
 		return data, nil
 	})
 }
