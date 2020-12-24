@@ -74,8 +74,14 @@ loop:
 				var fifoData = data
 				if i != 0 {
 					fifoData = data.Clone()
-					sp.NewData() <- fifoData
+
+					select {
+					case <-ctx.Done():
+						break loop
+					case sp.NewData() <- fifoData:
+					}
 				}
+
 				select {
 				case <-ctx.Done():
 					break loop

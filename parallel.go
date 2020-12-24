@@ -32,7 +32,6 @@ func (p *parallel) ID() string {
 
 // Run implements Stage.
 func (p *parallel) Run(ctx context.Context, sp StageParams) {
-loop:
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,7 +45,12 @@ loop:
 			for i := 0; i < len(p.tasks); i++ {
 				c := data.Clone()
 
-				sp.NewData() <- c
+				select {
+				case <-ctx.Done():
+					return
+				case sp.NewData() <- c:
+				}
+
 				go func(idx int, clone Data) {
 					tp := &taskParams{
 						newdata:   sp.NewData(),
@@ -74,7 +78,7 @@ loop:
 			if failed {
 				sp.ProcessedData() <- data
 				data.MarkAsProcessed()
-				continue loop
+				continue
 			}
 
 			select {

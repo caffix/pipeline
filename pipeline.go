@@ -126,6 +126,8 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	loop:
 		for {
 			select {
+			case <-pCtx.Done():
+				break loop
 			case <-f:
 				done = true
 			case <-newdata:
