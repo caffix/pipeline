@@ -1,5 +1,6 @@
 github.com/caffix/queue v0.0.0-20201218054805-426727dce0bf h1:mzzzkY1G08VvKannQYbbiAVoJmv2Mxt/WOFN6cmSWxk=
 github.com/caffix/queue v0.0.0-20201218054805-426727dce0bf/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
+github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035 h1:wFUL+cdCb5erB1HJHGYrtm5i6Y2LYpCq3wFef7XNii4=
 github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
 github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
