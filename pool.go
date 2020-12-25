@@ -92,42 +92,13 @@ loop:
 			if !ok {
 				break loop
 			}
-
-			var token struct{}
-			select {
-			case token = <-p.tokenPool:
-			case <-ctx.Done():
-				break loop
+			p.executeTask(ctx, dataIn, sp)
+		case <-sp.DataQueue().Signal:
+			if d, ok := sp.DataQueue().Next(); ok {
+				if data, ok := d.(Data); ok {
+					p.executeTask(ctx, data, sp)
+				}
 			}
-
-			go func(dataIn Data, token struct{}) {
-				defer func() { p.tokenPool <- token }()
-				tp := &taskParams{
-					newdata:   sp.NewData(),
-					processed: sp.ProcessedData(),
-					registry:  sp.Registry(),
-				}
-
-				dataOut, err := p.task.Process(ctx, dataIn, tp)
-				if err != nil {
-					sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
-					return
-				}
-
-				// If the task did not output data for the
-				// next stage there is nothing we need to do.
-				if dataOut == nil {
-					sp.ProcessedData() <- dataIn
-					dataIn.MarkAsProcessed()
-					return
-				}
-
-				// Output processed data
-				select {
-				case <-ctx.Done():
-				case sp.Output() <- dataOut:
-				}
-			}(dataIn, token)
 		}
 	}
 
@@ -135,4 +106,44 @@ loop:
 	for i := 0; i < cap(p.tokenPool); i++ {
 		<-p.tokenPool
 	}
+}
+
+func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams) {
+	var token struct{}
+
+	select {
+	case <-ctx.Done():
+		return
+	case token = <-p.tokenPool:
+	}
+
+	go func(dataIn Data, token struct{}) {
+		defer func() { p.tokenPool <- token }()
+
+		tp := &taskParams{
+			newdata:   sp.NewData(),
+			processed: sp.ProcessedData(),
+			registry:  sp.Registry(),
+		}
+
+		dataOut, err := p.task.Process(ctx, dataIn, tp)
+		if err != nil {
+			sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
+			return
+		}
+
+		// If the task did not output data for the
+		// next stage there is nothing we need to do.
+		if dataOut == nil {
+			sp.ProcessedData() <- dataIn
+			dataIn.MarkAsProcessed()
+			return
+		}
+
+		// Output processed data
+		select {
+		case <-ctx.Done():
+		case sp.Output() <- dataOut:
+		}
+	}(data, token)
 }

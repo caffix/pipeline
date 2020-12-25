@@ -112,8 +112,7 @@ func TestStageRegistry(t *testing.T) {
 		c := data.Clone()
 		tp.NewData() <- c
 		go func(d Data) {
-			r := tp.Registry()
-			r["counter"] <- d
+			tp.Registry()["counter"].Append(d)
 		}(c)
 
 		return data, nil

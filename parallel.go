@@ -36,56 +36,65 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 		select {
 		case <-ctx.Done():
 			return
-		case data, ok := <-sp.Input():
+		case dataIn, ok := <-sp.Input():
 			if !ok {
 				return
 			}
-
-			done := make(chan Data, len(p.tasks))
-			for i := 0; i < len(p.tasks); i++ {
-				c := data.Clone()
-
-				select {
-				case <-ctx.Done():
-					return
-				case sp.NewData() <- c:
+			p.executeTask(ctx, dataIn, sp)
+		case <-sp.DataQueue().Signal:
+			if d, ok := sp.DataQueue().Next(); ok {
+				if data, ok := d.(Data); ok {
+					p.executeTask(ctx, data, sp)
 				}
-
-				go func(idx int, clone Data) {
-					tp := &taskParams{
-						newdata:   sp.NewData(),
-						processed: sp.ProcessedData(),
-						registry:  sp.Registry(),
-					}
-
-					d, err := p.tasks[idx].Process(ctx, clone, tp)
-					if err != nil {
-						sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
-					}
-
-					sp.ProcessedData() <- clone
-					clone.MarkAsProcessed()
-					done <- d
-				}(i, c)
-			}
-
-			var failed bool
-			for i := 0; i < len(p.tasks); i++ {
-				if d := <-done; d == nil {
-					failed = true
-				}
-			}
-			if failed {
-				sp.ProcessedData() <- data
-				data.MarkAsProcessed()
-				continue
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case sp.Output() <- data:
 			}
 		}
+	}
+}
+
+func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
+	done := make(chan Data, len(p.tasks))
+
+	for i := 0; i < len(p.tasks); i++ {
+		c := data.Clone()
+
+		select {
+		case <-ctx.Done():
+			return
+		case sp.NewData() <- c:
+		}
+
+		go func(idx int, clone Data) {
+			tp := &taskParams{
+				newdata:   sp.NewData(),
+				processed: sp.ProcessedData(),
+				registry:  sp.Registry(),
+			}
+
+			d, err := p.tasks[idx].Process(ctx, clone, tp)
+			if err != nil {
+				sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
+			}
+
+			sp.ProcessedData() <- clone
+			clone.MarkAsProcessed()
+			done <- d
+		}(i, c)
+	}
+
+	var failed bool
+	for i := 0; i < len(p.tasks); i++ {
+		if d := <-done; d == nil {
+			failed = true
+		}
+	}
+	if failed {
+		sp.ProcessedData() <- data
+		data.MarkAsProcessed()
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+	case sp.Output() <- data:
 	}
 }

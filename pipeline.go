@@ -14,6 +14,7 @@ type params struct {
 	stage     int
 	inCh      <-chan Data
 	outCh     chan<- Data
+	dataQueue *queue.Queue
 	errQueue  *queue.Queue
 	newdata   chan<- Data
 	processed chan<- Data
@@ -23,6 +24,7 @@ type params struct {
 func (p *params) Position() int              { return p.stage }
 func (p *params) Input() <-chan Data         { return p.inCh }
 func (p *params) Output() chan<- Data        { return p.outCh }
+func (p *params) DataQueue() *queue.Queue    { return p.dataQueue }
 func (p *params) Error() *queue.Queue        { return p.errQueue }
 func (p *params) NewData() chan<- Data       { return p.newdata }
 func (p *params) ProcessedData() chan<- Data { return p.processed }
@@ -67,6 +69,8 @@ func (p *Pipeline) Execute(ctx context.Context, src InputSource, sink OutputSink
 // been processed, or an error occurs, or the context expires.
 func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink OutputSink, bufsize int) error {
 	pCtx, cancel := context.WithCancel(ctx)
+
+	var stageQueue []*queue.Queue
 	// Create the stage registry
 	registry := make(StageRegistry, len(p.stages)+1)
 	// Create channels for wiring together the InputSource,
@@ -74,13 +78,14 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	stageCh := make([]chan Data, len(p.stages)+1)
 	for i := 0; i < len(stageCh); i++ {
 		stageCh[i] = make(chan Data, bufsize)
+		stageQueue = append(stageQueue, queue.NewQueue())
 
 		id := "sink"
 		if i != len(stageCh)-1 {
 			id = p.stages[i].ID()
 		}
 		if id != "" {
-			registry[id] = stageCh[i]
+			registry[id] = stageQueue[i]
 		}
 	}
 	errQueue := queue.NewQueue()
@@ -96,6 +101,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				stage:     idx + 1,
 				inCh:      stageCh[idx],
 				outCh:     stageCh[idx+1],
+				dataQueue: stageQueue[idx],
 				errQueue:  errQueue,
 				newdata:   newdata,
 				processed: processed,
@@ -136,11 +142,11 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				count--
 			}
 			if done && count == 0 {
-				close(stageCh[0])
 				break loop
 			}
 		}
 
+		close(stageCh[0])
 		wg.Wait()
 		cancel()
 	}(finished)

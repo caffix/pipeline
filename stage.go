@@ -7,7 +7,7 @@ import (
 )
 
 // StageRegistry is a map of stage identifiers to input channels.
-type StageRegistry map[string]chan<- Data
+type StageRegistry map[string]*queue.Queue
 
 // StageParams provides the information needed for executing a pipeline
 // Stage. The Pipeline passes a StageParams instance to the Run method
@@ -21,6 +21,9 @@ type StageParams interface {
 
 	// Output returns the output channel for this stage.
 	Output() chan<- Data
+
+	// DataQueue returns the alternative data queue for this stage.
+	DataQueue() *queue.Queue
 
 	// NewData returns the channel for signalling new Data to the pipeline.
 	NewData() chan<- Data
