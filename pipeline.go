@@ -142,11 +142,11 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				count--
 			}
 			if done && count == 0 {
+				close(stageCh[0])
 				break loop
 			}
 		}
 
-		close(stageCh[0])
 		wg.Wait()
 		cancel()
 	}(finished)
