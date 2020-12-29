@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/caffix/queue"
 	"github.com/caffix/stringset"
@@ -91,8 +92,8 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	errQueue := queue.NewQueue()
 
 	var wg sync.WaitGroup
-	newdata := make(chan Data)
-	processed := make(chan Data)
+	newdata := make(chan Data, 10)
+	processed := make(chan Data, 10)
 	// Start a goroutine for each Stage
 	for i := 0; i < len(p.stages); i++ {
 		wg.Add(1)
@@ -129,21 +130,25 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	go func(f chan struct{}) {
 		var count int
 		var done bool
+		t := time.NewTicker(time.Second)
+		defer t.Stop()
 	loop:
 		for {
 			select {
 			case <-pCtx.Done():
 				break loop
+			case <-t.C:
+				if done && count == 0 &&
+					len(newdata) == 0 && len(processed) == 0 {
+					close(stageCh[0])
+					break loop
+				}
 			case <-f:
 				done = true
 			case <-newdata:
 				count++
 			case <-processed:
 				count--
-			}
-			if done && count == 0 {
-				close(stageCh[0])
-				break loop
 			}
 		}
 
