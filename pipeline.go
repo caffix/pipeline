@@ -14,8 +14,8 @@ type params struct {
 	stage     int
 	inCh      <-chan Data
 	outCh     chan<- Data
-	dataQueue *queue.Queue
-	errQueue  *queue.Queue
+	dataQueue queue.Queue
+	errQueue  queue.Queue
 	newdata   chan<- Data
 	processed chan<- Data
 	registry  StageRegistry
@@ -24,8 +24,8 @@ type params struct {
 func (p *params) Position() int              { return p.stage }
 func (p *params) Input() <-chan Data         { return p.inCh }
 func (p *params) Output() chan<- Data        { return p.outCh }
-func (p *params) DataQueue() *queue.Queue    { return p.dataQueue }
-func (p *params) Error() *queue.Queue        { return p.errQueue }
+func (p *params) DataQueue() queue.Queue     { return p.dataQueue }
+func (p *params) Error() queue.Queue         { return p.errQueue }
 func (p *params) NewData() chan<- Data       { return p.newdata }
 func (p *params) ProcessedData() chan<- Data { return p.processed }
 func (p *params) Registry() StageRegistry    { return p.registry }
@@ -70,7 +70,7 @@ func (p *Pipeline) Execute(ctx context.Context, src InputSource, sink OutputSink
 func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink OutputSink, bufsize int) error {
 	pCtx, cancel := context.WithCancel(ctx)
 
-	var stageQueue []*queue.Queue
+	var stageQueue []queue.Queue
 	// Create the stage registry
 	registry := make(StageRegistry, len(p.stages)+1)
 	// Create channels for wiring together the InputSource,
@@ -155,7 +155,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	// Collect any emitted errors and wrap them in a multi-error
 	select {
 	case <-pCtx.Done():
-	case <-errQueue.Signal:
+	case <-errQueue.Signal():
 		errQueue.Process(func(e interface{}) {
 			if qErr, ok := e.(error); ok {
 				err = multierror.Append(err, qErr)
@@ -168,7 +168,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 
 // inputSourceRunner drives the InputSource to continue providing
 // data to the first stage of the pipeline.
-func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, newdata chan<- Data, errQueue *queue.Queue) {
+func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, newdata chan<- Data, errQueue queue.Queue) {
 	for src.Next(ctx) {
 		data := src.Data()
 		newdata <- data
@@ -185,7 +185,7 @@ func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, 
 	}
 }
 
-func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, processed chan<- Data, errQueue *queue.Queue) {
+func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, processed chan<- Data, errQueue queue.Queue) {
 	for {
 		select {
 		case <-ctx.Done():

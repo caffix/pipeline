@@ -41,7 +41,7 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 				return
 			}
 			p.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal:
+		case <-sp.DataQueue().Signal():
 			if d, ok := sp.DataQueue().Next(); ok {
 				if data, ok := d.(Data); ok {
 					p.executeTask(ctx, data, sp)

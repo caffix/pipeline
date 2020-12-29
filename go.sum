@@ -1,8 +1,12 @@
-github.com/caffix/queue v0.0.0-20201218054805-426727dce0bf h1:mzzzkY1G08VvKannQYbbiAVoJmv2Mxt/WOFN6cmSWxk=
-github.com/caffix/queue v0.0.0-20201218054805-426727dce0bf/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
-github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035 h1:wFUL+cdCb5erB1HJHGYrtm5i6Y2LYpCq3wFef7XNii4=
+github.com/caffix/queue v0.0.0-20201228171855-4a443918e170 h1:HCj013vX2uYLnvzGy6nNTHltwVxgu4ZybYmDH5LU8g4=
+github.com/caffix/queue v0.0.0-20201228171855-4a443918e170/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
+github.com/caffix/queue v0.0.0-20201229193127-fbd8f53cfd6a h1:3qpGeJifrz62wVY4yHfhnd4gygtejkxmqM+GiUXOTK8=
+github.com/caffix/queue v0.0.0-20201229193127-fbd8f53cfd6a/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
 github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
-github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
+github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c h1:gW2jpj1YEl72H4x7BL2K1ZNkGJUVu3HZ0Hp9xU83cKE=
+github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
+github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
+github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.1.0 h1:B9UzwGQJehnUY1yNrnwREHc3fGbC2xefo8g4TbElacI=
 github.com/hashicorp/go-multierror v1.1.0/go.mod h1:spPvp8C1qA32ftKqdAHm4hHTbPw+vmowP0z+KUhOZdA=

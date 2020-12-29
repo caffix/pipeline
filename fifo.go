@@ -36,7 +36,7 @@ func (r *fifo) Run(ctx context.Context, sp StageParams) {
 				return
 			}
 			r.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal:
+		case <-sp.DataQueue().Signal():
 			if d, ok := sp.DataQueue().Next(); ok {
 				if data, ok := d.(Data); ok {
 					r.executeTask(ctx, data, sp)
