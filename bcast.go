@@ -79,7 +79,6 @@ loop:
 			}
 		}
 	}
-
 	// Close input channels and wait for FIFOs to exit
 	for _, ch := range b.inChs {
 		close(ch)
@@ -89,10 +88,11 @@ loop:
 
 func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) {
 	for i := len(b.fifos) - 1; i >= 0; i-- {
+		fifoData := data
+
 		// As each FIFO might modify the data, to
 		// avoid data races we need to make a copy
 		// of the data for all FIFOs except the first.
-		var fifoData = data
 		if i != 0 {
 			fifoData = data.Clone()
 

@@ -1,6 +1,8 @@
 package pipeline
 
-import "context"
+import (
+	"context"
+)
 
 // TaskParams provides access to pipeline mechanisms needed by a Task.
 // The Stage passes a TaskParams instance to the Process method of
@@ -32,6 +34,27 @@ type TaskFunc func(context.Context, Data, TaskParams) (Data, error)
 // Process calls f(ctx, data)
 func (f TaskFunc) Process(ctx context.Context, data Data, params TaskParams) (Data, error) {
 	return f(ctx, data, params)
+}
+
+// SendData marks the provided data as new to the pipeline and sends it to the
+// provided named stage. The data is marked as processed if the named stage does
+// not exist on the pipeline.
+func SendData(ctx context.Context, stage string, data Data, tp TaskParams) {
+	select {
+	case <-ctx.Done():
+		return
+	case tp.NewData() <- data:
+	}
+
+	if q, found := tp.Registry()[stage]; found {
+		q.Append(data)
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+	case tp.ProcessedData() <- data:
+	}
 }
 
 type taskParams struct {

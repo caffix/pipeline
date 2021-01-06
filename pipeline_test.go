@@ -103,18 +103,18 @@ func TestStageRegistry(t *testing.T) {
 
 	max := 3
 	var count int
-	task := TaskFunc(func(_ context.Context, data Data, tp TaskParams) (Data, error) {
+	task := TaskFunc(func(ctx context.Context, data Data, tp TaskParams) (Data, error) {
 		count++
 		if count > max {
 			return data, nil
 		}
 
-		c := data.Clone()
-		tp.NewData() <- c
-		go func(d Data) {
-			tp.Registry()["counter"].Append(d)
-		}(c)
+		// Send data to an unnamed stage
+		if count == 1 {
+			SendData(ctx, "fake", data.Clone(), tp)
+		}
 
+		go SendData(ctx, "counter", data.Clone(), tp)
 		return data, nil
 	})
 

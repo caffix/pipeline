@@ -127,7 +127,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 		wg.Done()
 	}()
 	// Monitor for completion of the pipeline execution
-	go func(f chan struct{}) {
+	go func() {
 		var count int
 		var done bool
 		t := time.NewTicker(time.Second)
@@ -138,12 +138,11 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 			case <-pCtx.Done():
 				break loop
 			case <-t.C:
-				if done && count == 0 &&
-					len(newdata) == 0 && len(processed) == 0 {
+				if done && count == 0 && len(newdata) == 0 && len(processed) == 0 {
 					close(stageCh[0])
 					break loop
 				}
-			case <-f:
+			case <-finished:
 				done = true
 			case <-newdata:
 				count++
@@ -151,10 +150,9 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				count--
 			}
 		}
-
 		wg.Wait()
 		cancel()
-	}(finished)
+	}()
 
 	var err error
 	// Collect any emitted errors and wrap them in a multi-error
