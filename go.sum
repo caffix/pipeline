@@ -1,7 +1,5 @@
-github.com/caffix/queue v0.0.0-20201228171855-4a443918e170 h1:HCj013vX2uYLnvzGy6nNTHltwVxgu4ZybYmDH5LU8g4=
-github.com/caffix/queue v0.0.0-20201228171855-4a443918e170/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
-github.com/caffix/queue v0.0.0-20201229193127-fbd8f53cfd6a h1:3qpGeJifrz62wVY4yHfhnd4gygtejkxmqM+GiUXOTK8=
-github.com/caffix/queue v0.0.0-20201229193127-fbd8f53cfd6a/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
+github.com/caffix/queue v0.0.0-20210301043549-e3b360b69730 h1:9scnPUlS5CesLD16QQ0Q0+BGvgLiE4ziwsm4XvmZKG8=
+github.com/caffix/queue v0.0.0-20210301043549-e3b360b69730/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
 github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
 github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c h1:gW2jpj1YEl72H4x7BL2K1ZNkGJUVu3HZ0Hp9xU83cKE=
 github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
