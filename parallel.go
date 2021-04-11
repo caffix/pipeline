@@ -33,27 +33,22 @@ func (p *parallel) ID() string {
 // Run implements Stage.
 func (p *parallel) Run(ctx context.Context, sp StageParams) {
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		case dataIn, ok := <-sp.Input():
-			if !ok {
-				return
-			}
-			p.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal():
-			if d, ok := sp.DataQueue().Next(); ok {
-				if data, ok := d.(Data); ok {
-					p.executeTask(ctx, data, sp)
-				}
-			}
+		if !processStageData(ctx, sp, p.executeTask) {
+			break
 		}
 	}
 }
 
 func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
-	done := make(chan Data, len(p.tasks))
+	select {
+	case <-ctx.Done():
+		sp.ProcessedData() <- data
+		data.MarkAsProcessed()
+		return
+	default:
+	}
 
+	done := make(chan Data, len(p.tasks))
 	for i := 0; i < len(p.tasks); i++ {
 		c := data.Clone()
 

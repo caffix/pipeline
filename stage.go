@@ -51,3 +51,37 @@ type Stage interface {
 	// input channel is closed, the context expires, or an error occurs.
 	Run(context.Context, StageParams)
 }
+
+type execTask func(context.Context, Data, StageParams)
+
+func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
+	// Empty the data queue first
+	select {
+	case <-sp.DataQueue().Signal():
+		if d, ok := sp.DataQueue().Next(); ok {
+			if data, ok := d.(Data); ok {
+				task(ctx, data, sp)
+				return true
+			}
+		}
+	default:
+	}
+
+	cont := true
+	// Drop into a select that processes data from the input channel and data queue
+	select {
+	case dataIn, ok := <-sp.Input():
+		if ok {
+			task(ctx, dataIn, sp)
+		} else if !ok && sp.DataQueue().Len() == 0 {
+			cont = false
+		}
+	case <-sp.DataQueue().Signal():
+		if d, ok := sp.DataQueue().Next(); ok {
+			if data, ok := d.(Data); ok {
+				task(ctx, data, sp)
+			}
+		}
+	}
+	return cont
+}

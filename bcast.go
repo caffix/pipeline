@@ -60,23 +60,11 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 			wg.Done()
 		}(i)
 	}
-loop:
+
 	for {
 		// Read incoming data and pass them to each FIFO
-		select {
-		case <-ctx.Done():
-			break loop
-		case dataIn, ok := <-sp.Input():
-			if !ok {
-				break loop
-			}
-			b.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal():
-			if d, ok := sp.DataQueue().Next(); ok {
-				if data, ok := d.(Data); ok {
-					b.executeTask(ctx, data, sp)
-				}
-			}
+		if !processStageData(ctx, sp, b.executeTask) {
+			break
 		}
 	}
 	// Close input channels and wait for FIFOs to exit
@@ -87,6 +75,14 @@ loop:
 }
 
 func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) {
+	select {
+	case <-ctx.Done():
+		sp.ProcessedData() <- data
+		data.MarkAsProcessed()
+		return
+	default:
+	}
+
 	for i := len(b.fifos) - 1; i >= 0; i-- {
 		fifoData := data
 

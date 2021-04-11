@@ -83,25 +83,11 @@ func (p *dynamicPool) ID() string {
 
 // Run implements Stage.
 func (p *dynamicPool) Run(ctx context.Context, sp StageParams) {
-loop:
 	for {
-		select {
-		case <-ctx.Done():
-			break loop
-		case dataIn, ok := <-sp.Input():
-			if !ok {
-				break loop
-			}
-			p.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal():
-			if d, ok := sp.DataQueue().Next(); ok {
-				if data, ok := d.(Data); ok {
-					p.executeTask(ctx, data, sp)
-				}
-			}
+		if !processStageData(ctx, sp, p.executeTask) {
+			break
 		}
 	}
-
 	// Wait for all workers to exit by trying to empty the token pool
 	for i := 0; i < cap(p.tokenPool); i++ {
 		<-p.tokenPool
@@ -113,6 +99,8 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 
 	select {
 	case <-ctx.Done():
+		sp.ProcessedData() <- data
+		data.MarkAsProcessed()
 		return
 	case token = <-p.tokenPool:
 	}

@@ -28,25 +28,21 @@ func (r *fifo) ID() string {
 // Run implements Stage.
 func (r *fifo) Run(ctx context.Context, sp StageParams) {
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		case dataIn, ok := <-sp.Input():
-			if !ok {
-				return
-			}
-			r.executeTask(ctx, dataIn, sp)
-		case <-sp.DataQueue().Signal():
-			if d, ok := sp.DataQueue().Next(); ok {
-				if data, ok := d.(Data); ok {
-					r.executeTask(ctx, data, sp)
-				}
-			}
+		if !processStageData(ctx, sp, r.executeTask) {
+			break
 		}
 	}
 }
 
 func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) {
+	select {
+	case <-ctx.Done():
+		sp.ProcessedData() <- data
+		data.MarkAsProcessed()
+		return
+	default:
+	}
+
 	tp := &taskParams{
 		newdata:   sp.NewData(),
 		processed: sp.ProcessedData(),
