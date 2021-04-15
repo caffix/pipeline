@@ -68,7 +68,7 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	}
 
 	cont := true
-	// Drop into a select that processes data from the input channel and data queue
+	// Processes data from the input channel and data queue
 	select {
 	case dataIn, ok := <-sp.Input():
 		if ok {

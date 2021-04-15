@@ -1,5 +1,6 @@
 # Data Pipeline
 
+![GitHub Test Status](https://github.com/caffix/pipeline/workflows/tests/badge.svg)
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/caffix/pipeline?tab=overview)
 [![License](https://img.shields.io/github/license/caffix/pipeline)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Go Report](https://goreportcard.com/badge/github.com/caffix/pipeline)](https://goreportcard.com/report/github.com/caffix/pipeline)

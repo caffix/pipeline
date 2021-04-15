@@ -92,8 +92,8 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	errQueue := queue.NewQueue()
 
 	var wg sync.WaitGroup
-	newdata := make(chan Data, 10)
-	processed := make(chan Data, 10)
+	newdata := make(chan Data, 100)
+	processed := make(chan Data, 100)
 	// Start a goroutine for each Stage
 	for i := 0; i < len(p.stages); i++ {
 		wg.Add(1)
@@ -135,8 +135,6 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	loop:
 		for {
 			select {
-			case <-pCtx.Done():
-				break loop
 			case <-t.C:
 				if done && count == 0 && len(newdata) == 0 && len(processed) == 0 {
 					close(stageCh[0])
