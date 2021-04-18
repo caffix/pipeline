@@ -25,13 +25,6 @@ type StageParams interface {
 	// DataQueue returns the alternative data queue for this stage.
 	DataQueue() queue.Queue
 
-	// NewData returns the channel for signalling new Data to the pipeline.
-	NewData() chan<- Data
-
-	// ProcessedData returns the channel for signalling processed Data to
-	// the pipeline.
-	ProcessedData() chan<- Data
-
 	// Error returns the queue that reports errors encountered by the stage.
 	Error() queue.Queue
 

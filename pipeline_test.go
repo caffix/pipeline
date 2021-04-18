@@ -114,7 +114,7 @@ func TestStageRegistry(t *testing.T) {
 			SendData(ctx, "fake", data.Clone(), tp)
 		}
 
-		go SendData(ctx, "counter", data.Clone(), tp)
+		SendData(ctx, "counter", data.Clone(), tp)
 		return data, nil
 	})
 
@@ -169,7 +169,6 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 
 			if s.dropData {
 				s.t.Logf("[stage %d] dropping data: %v", sp.Position(), d)
-				sp.ProcessedData() <- d
 				d.MarkAsProcessed()
 				continue
 			}

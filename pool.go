@@ -99,7 +99,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 
 	select {
 	case <-ctx.Done():
-		sp.ProcessedData() <- data
 		data.MarkAsProcessed()
 		return
 	case token = <-p.tokenPool:
@@ -108,13 +107,7 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 	go func(dataIn Data, token struct{}) {
 		defer func() { p.tokenPool <- token }()
 
-		tp := &taskParams{
-			newdata:   sp.NewData(),
-			processed: sp.ProcessedData(),
-			registry:  sp.Registry(),
-		}
-
-		dataOut, err := p.task.Process(ctx, dataIn, tp)
+		dataOut, err := p.task.Process(ctx, dataIn, &taskParams{registry: sp.Registry()})
 		if err != nil {
 			sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			return
@@ -123,7 +116,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		// If the task did not output data for the
 		// next stage there is nothing we need to do.
 		if dataOut == nil {
-			sp.ProcessedData() <- dataIn
 			dataIn.MarkAsProcessed()
 			return
 		}

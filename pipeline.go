@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/caffix/queue"
 	"github.com/caffix/stringset"
@@ -70,6 +69,7 @@ func (p *Pipeline) Execute(ctx context.Context, src InputSource, sink OutputSink
 // been processed, or an error occurs, or the context expires.
 func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink OutputSink, bufsize int) error {
 	pCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	var stageQueue []queue.Queue
 	// Create the stage registry
@@ -92,8 +92,6 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	errQueue := queue.NewQueue()
 
 	var wg sync.WaitGroup
-	newdata := make(chan Data, 100)
-	processed := make(chan Data, 100)
 	// Start a goroutine for each Stage
 	for i := 0; i < len(p.stages); i++ {
 		wg.Add(1)
@@ -104,8 +102,6 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				outCh:     stageCh[idx+1],
 				dataQueue: stageQueue[idx],
 				errQueue:  errQueue,
-				newdata:   newdata,
-				processed: processed,
 				registry:  registry,
 			})
 			// Tell the next Stage that no more Data is available
@@ -115,39 +111,18 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	}
 	// Start goroutines for the InputSource and OutputSink
 	wg.Add(2)
-	finished := make(chan struct{}, 2)
 	go func() {
-		inputSourceRunner(pCtx, src, stageCh[0], newdata, errQueue)
-		// Tell the next Stage that no more Data is available
-		finished <- struct{}{}
+		inputSourceRunner(pCtx, src, stageCh[0], errQueue)
+		// Tell the first Stage that no more Data is available
+		close(stageCh[0])
 		wg.Done()
 	}()
 	go func() {
-		outputSinkRunner(pCtx, sink, stageCh[len(stageCh)-1], processed, errQueue)
+		outputSinkRunner(pCtx, sink, stageCh[len(stageCh)-1], errQueue)
 		wg.Done()
 	}()
 	// Monitor for completion of the pipeline execution
 	go func() {
-		var count int
-		var done bool
-		t := time.NewTicker(time.Second)
-		defer t.Stop()
-	loop:
-		for {
-			select {
-			case <-t.C:
-				if done && count == 0 && len(newdata) == 0 && len(processed) == 0 {
-					close(stageCh[0])
-					break loop
-				}
-			case <-finished:
-				done = true
-			case <-newdata:
-				count++
-			case <-processed:
-				count--
-			}
-		}
 		wg.Wait()
 		cancel()
 	}()
@@ -162,17 +137,15 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				err = multierror.Append(err, qErr)
 			}
 		})
-		cancel()
 	}
 	return err
 }
 
 // inputSourceRunner drives the InputSource to continue providing
 // data to the first stage of the pipeline.
-func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, newdata chan<- Data, errQueue queue.Queue) {
+func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, errQueue queue.Queue) {
 	for src.Next(ctx) {
 		data := src.Data()
-		newdata <- data
 
 		select {
 		case <-ctx.Done():
@@ -186,7 +159,7 @@ func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, 
 	}
 }
 
-func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, processed chan<- Data, errQueue queue.Queue) {
+func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, errQueue queue.Queue) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -200,7 +173,6 @@ func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, pr
 				return
 			}
 
-			processed <- data
 			data.MarkAsProcessed()
 		}
 	}

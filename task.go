@@ -8,13 +8,6 @@ import (
 // The Stage passes a TaskParams instance to the Process method of
 // each task.
 type TaskParams interface {
-	// NewData returns the channel for signalling new Data to the pipeline.
-	NewData() chan<- Data
-
-	// ProcessedData returns the channel for signalling processed Data to
-	// the pipeline.
-	ProcessedData() chan<- Data
-
 	// Registry returns a map of stage names to stage input channels.
 	Registry() StageRegistry
 }
@@ -37,32 +30,21 @@ func (f TaskFunc) Process(ctx context.Context, data Data, params TaskParams) (Da
 }
 
 // SendData marks the provided data as new to the pipeline and sends it to the
-// provided named stage. The data is marked as processed if the named stage does
-// not exist on the pipeline.
+// provided named stage.
 func SendData(ctx context.Context, stage string, data Data, tp TaskParams) {
 	select {
 	case <-ctx.Done():
 		return
-	case tp.NewData() <- data:
+	default:
 	}
 
 	if q, found := tp.Registry()[stage]; found {
 		q.Append(data)
-		return
-	}
-
-	select {
-	case <-ctx.Done():
-	case tp.ProcessedData() <- data:
 	}
 }
 
 type taskParams struct {
-	newdata   chan<- Data
-	processed chan<- Data
-	registry  StageRegistry
+	registry StageRegistry
 }
 
-func (tp *taskParams) NewData() chan<- Data       { return tp.newdata }
-func (tp *taskParams) ProcessedData() chan<- Data { return tp.processed }
-func (tp *taskParams) Registry() StageRegistry    { return tp.registry }
+func (tp *taskParams) Registry() StageRegistry { return tp.registry }

@@ -53,8 +53,6 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 				outCh:     sp.Output(),
 				dataQueue: queue.NewQueue(),
 				errQueue:  sp.Error(),
-				newdata:   sp.NewData(),
-				processed: sp.ProcessedData(),
 				registry:  sp.Registry(),
 			})
 			wg.Done()
@@ -77,7 +75,6 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) {
 	select {
 	case <-ctx.Done():
-		sp.ProcessedData() <- data
 		data.MarkAsProcessed()
 		return
 	default:
@@ -91,12 +88,6 @@ func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) 
 		// of the data for all FIFOs except the first.
 		if i != 0 {
 			fifoData = data.Clone()
-
-			select {
-			case <-ctx.Done():
-				return
-			case sp.NewData() <- fifoData:
-			}
 		}
 
 		select {
