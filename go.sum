@@ -1,10 +1,14 @@
 github.com/caffix/queue v0.0.0-20210301212750-6e488abe1004 h1:n/ae8+HKTPGhHHH/5AvzW/DW5CBI1lS0jdm50gKsGBQ=
 github.com/caffix/queue v0.0.0-20210301212750-6e488abe1004/go.mod h1:EGrMYDMC3oIYDWaLGKWMypHkg/vEBDqxbz2guAlY0Wk=
+github.com/caffix/queue v0.0.0-20210420232735-50705a598e3e h1:gdc9OHKSHoi9h8V7V4KI4CJYlyD/9k91VPhLohp6Opg=
+github.com/caffix/queue v0.0.0-20210420232735-50705a598e3e/go.mod h1:jQmcf5a/YBH3dS7onNXaIG4dhfJLwPOQEj6B/PsXodI=
 github.com/caffix/stringset v0.0.0-20201218015502-4f60634ff035/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
 github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c h1:gW2jpj1YEl72H4x7BL2K1ZNkGJUVu3HZ0Hp9xU83cKE=
 github.com/caffix/stringset v0.0.0-20201218054545-37e95a70826c/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
 github.com/caffix/stringset v0.0.0-20210320213318-a00bc23f59bc h1:W8mSHdsSHYukU51IFIN4ALupUC+tcG8mvzmnNnh3gbs=
 github.com/caffix/stringset v0.0.0-20210320213318-a00bc23f59bc/go.mod h1:28GU9FTlJHzfjrFJ5Ep7vmXNkSSM3JF0miNt7ZM9V5w=
+github.com/caffix/stringset v0.0.0-20210420232605-81a3d140a6a2 h1:z0zS8S1/5ubEDqhztn25k/wFr6rfp+y6Qv/Yot9ZvUs=
+github.com/caffix/stringset v0.0.0-20210420232605-81a3d140a6a2/go.mod h1:nkPxBN9hKiSesggscqWn0fMhiQLuvYPCLWnPNewKlJo=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
