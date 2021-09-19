@@ -43,6 +43,7 @@ type Pipeline struct {
 func NewPipeline(stages ...Stage) *Pipeline {
 	var count int
 	set := stringset.New()
+	defer set.Close()
 
 	for _, stage := range stages {
 		if id := stage.ID(); id != "" {
