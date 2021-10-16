@@ -40,7 +40,6 @@ func (b *broadcast) ID() string {
 // Run implements Stage.
 func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 	var wg sync.WaitGroup
-
 	// Start each FIFO in a goroutine. Each FIFO gets its own dedicated
 	// input channel and the shared output channel passed to Run.
 	for i := 0; i < len(b.fifos); i++ {
@@ -82,7 +81,6 @@ func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) 
 
 	for i := len(b.fifos) - 1; i >= 0; i-- {
 		fifoData := data
-
 		// As each FIFO might modify the data, to
 		// avoid data races we need to make a copy
 		// of the data for all FIFOs except the first.

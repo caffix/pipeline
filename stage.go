@@ -66,7 +66,7 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	case dataIn, ok := <-sp.Input():
 		if ok {
 			task(ctx, dataIn, sp)
-		} else if !ok && sp.DataQueue().Len() == 0 {
+		} else if sp.DataQueue().Len() == 0 {
 			cont = false
 		}
 	case <-sp.DataQueue().Signal():

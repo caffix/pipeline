@@ -37,7 +37,6 @@ func (p *fixedPool) ID() string {
 // Run implements Stage.
 func (p *fixedPool) Run(ctx context.Context, params StageParams) {
 	var wg sync.WaitGroup
-
 	// Spin up each task in the pool and wait for them to exit
 	for i := 0; i < len(p.fifos); i++ {
 		wg.Add(1)
@@ -46,7 +45,6 @@ func (p *fixedPool) Run(ctx context.Context, params StageParams) {
 			wg.Done()
 		}(i)
 	}
-
 	wg.Wait()
 }
 
@@ -112,14 +110,12 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 			sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			return
 		}
-
 		// If the task did not output data for the
 		// next stage there is nothing we need to do.
 		if dataOut == nil {
 			dataIn.MarkAsProcessed()
 			return
 		}
-
 		// Output processed data
 		select {
 		case <-ctx.Done():
