@@ -3,8 +3,8 @@ github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96/go.mod h1:bOv
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
-github.com/caffix/queue v0.0.0-20220310035132-ba6356196d03 h1:jMajX2E8LJzUaaamALjiDtncyVs/0HYyq6vyNg0L9lM=
-github.com/caffix/queue v0.0.0-20220310035132-ba6356196d03/go.mod h1:uZb+KY0S+jd6t9C6jgadV7CDSBMhLODCdwrxHKie2vI=
+github.com/caffix/queue v0.1.0 h1:cGH2EFejj166iJHVnBQvmMil13XSjVWimHHNrw6X6/I=
+github.com/caffix/queue v0.1.0/go.mod h1:uZb+KY0S+jd6t9C6jgadV7CDSBMhLODCdwrxHKie2vI=
 github.com/caffix/stringset v0.0.0-20210920202210-bde5591d523d/go.mod h1:LlF238uAHb6xk7lg+L+nKj3yWAlxin2POgV4avSjAFw=
 github.com/caffix/stringset v0.0.0-20211127022128-4574bae71adb h1:kSTrbTYBy4NmxZ6kO7HIn0mEp5RKZkOB2WunLoIUV1Y=
 github.com/caffix/stringset v0.0.0-20211127022128-4574bae71adb/go.mod h1:MTAjA76GgWUls0Ik6lRJg19HSaB/ofmdq9o2B5ML9/o=
