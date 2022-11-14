@@ -92,13 +92,13 @@ func (p *dynamicPool) Run(ctx context.Context, sp StageParams) {
 	}
 }
 
-func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams) {
+func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	var token struct{}
 
 	select {
 	case <-ctx.Done():
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	case token = <-p.tokenPool:
 	}
 
@@ -114,6 +114,7 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		// next stage there is nothing we need to do.
 		if dataOut == nil {
 			dataIn.MarkAsProcessed()
+			sp.Pipeline().decDataItemCount()
 			return
 		}
 		// Output processed data
@@ -122,4 +123,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		case sp.Output() <- dataOut:
 		}
 	}(data, token)
+
+	return data, nil
 }

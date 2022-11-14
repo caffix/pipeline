@@ -34,30 +34,32 @@ func (r *fifo) Run(ctx context.Context, sp StageParams) {
 	}
 }
 
-func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) {
+func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	tp := &taskParams{registry: sp.Registry()}
 
 	select {
 	case <-ctx.Done():
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	default:
 	}
 
 	dataOut, err := r.task.Process(ctx, data, tp)
 	if err != nil {
-		sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
-		return
+		e := fmt.Errorf("pipeline stage %d: %v", sp.Position(), err)
+		sp.Error().Append(e)
+		return dataOut, e
 	}
 	// If the task did not output data for the
 	// next stage there is nothing we need to do
 	if dataOut == nil {
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	}
 	// Output processed data
 	select {
 	case <-ctx.Done():
 	case sp.Output() <- dataOut:
 	}
+	return dataOut, nil
 }

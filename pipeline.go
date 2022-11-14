@@ -11,6 +11,7 @@ import (
 )
 
 type params struct {
+	pipeline  *Pipeline
 	stage     int
 	inCh      <-chan Data
 	outCh     chan<- Data
@@ -21,6 +22,7 @@ type params struct {
 	registry  StageRegistry
 }
 
+func (p *params) Pipeline() *Pipeline        { return p.pipeline }
 func (p *params) Position() int              { return p.stage }
 func (p *params) Input() <-chan Data         { return p.inCh }
 func (p *params) Output() chan<- Data        { return p.outCh }
@@ -35,7 +37,9 @@ func (p *params) Registry() StageRegistry    { return p.registry }
 // is constructed from an InputSource, an OutputSink, and zero
 // or more Stage instances for processing.
 type Pipeline struct {
-	stages []Stage
+	sync.Mutex
+	dataItemCount int
+	stages        []Stage
 }
 
 // NewPipeline returns a new data pipeline instance where input
@@ -98,6 +102,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 		wg.Add(1)
 		go func(idx int) {
 			p.stages[idx].Run(pCtx, &params{
+				pipeline:  p,
 				stage:     idx + 1,
 				inCh:      stageCh[idx],
 				outCh:     stageCh[idx+1],
@@ -113,13 +118,13 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	// Start goroutines for the InputSource and OutputSink
 	wg.Add(2)
 	go func() {
-		inputSourceRunner(pCtx, src, stageCh[0], errQueue)
+		p.inputSourceRunner(pCtx, src, stageCh[0], errQueue)
 		// Tell the first Stage that no more Data is available
 		close(stageCh[0])
 		wg.Done()
 	}()
 	go func() {
-		outputSinkRunner(pCtx, sink, stageCh[len(stageCh)-1], errQueue)
+		p.outputSinkRunner(pCtx, sink, stageCh[len(stageCh)-1], errQueue)
 		wg.Done()
 	}()
 	// Monitor for completion of the pipeline execution
@@ -142,9 +147,35 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	return err
 }
 
+// DataItemCount returns the number of data items currently on the pipeline.
+func (p *Pipeline) DataItemCount() int {
+	p.Lock()
+	defer p.Unlock()
+
+	return p.dataItemCount
+}
+
+// incDataItemCount increments the count and returns the number of items on the pipeline.
+func (p *Pipeline) incDataItemCount() int {
+	p.Lock()
+	defer p.Unlock()
+
+	p.dataItemCount++
+	return p.dataItemCount
+}
+
+// decDataItemCount decrements the count and returns the number of items on the pipeline.
+func (p *Pipeline) decDataItemCount() int {
+	p.Lock()
+	defer p.Unlock()
+
+	p.dataItemCount--
+	return p.dataItemCount
+}
+
 // inputSourceRunner drives the InputSource to continue providing
 // data to the first stage of the pipeline.
-func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, errQueue queue.Queue) {
+func (p *Pipeline) inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, errQueue queue.Queue) {
 	for src.Next(ctx) {
 		data := src.Data()
 
@@ -152,6 +183,7 @@ func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, 
 		case <-ctx.Done():
 			return
 		case outCh <- data:
+			_ = p.incDataItemCount()
 		}
 	}
 	// Check for errors
@@ -160,7 +192,7 @@ func inputSourceRunner(ctx context.Context, src InputSource, outCh chan<- Data, 
 	}
 }
 
-func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, errQueue queue.Queue) {
+func (p *Pipeline) outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, errQueue queue.Queue) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -175,6 +207,7 @@ func outputSinkRunner(ctx context.Context, sink OutputSink, inCh <-chan Data, er
 			}
 
 			data.MarkAsProcessed()
+			_ = p.decDataItemCount()
 		}
 	}
 }

@@ -39,11 +39,11 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 	}
 }
 
-func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
+func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	default:
 	}
 
@@ -53,7 +53,7 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
 
 		select {
 		case <-ctx.Done():
-			return
+			return nil, nil
 		default:
 		}
 
@@ -62,7 +62,6 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
 			if err != nil {
 				sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			}
-
 			clone.MarkAsProcessed()
 			done <- d
 		}(i, c)
@@ -76,11 +75,12 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) {
 	}
 	if failed {
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
 	case sp.Output() <- data:
 	}
+	return data, nil
 }

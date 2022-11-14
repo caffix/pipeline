@@ -71,11 +71,11 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 	wg.Wait()
 }
 
-func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) {
+func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
 		data.MarkAsProcessed()
-		return
+		return nil, nil
 	default:
 	}
 
@@ -90,9 +90,10 @@ func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) 
 
 		select {
 		case <-ctx.Done():
-			return
+			return nil, nil
 		case b.inChs[i] <- fifoData:
 			// data sent to i_th FIFO
 		}
 	}
+	return data, nil
 }

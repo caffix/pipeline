@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"regexp"
 	"testing"
@@ -54,31 +55,6 @@ func TestTaskErrorHandling(t *testing.T) {
 	}
 }
 
-func TestSourceErrorHandling(t *testing.T) {
-	src := &sourceStub{
-		data: stringDataValues(3),
-		err:  errors.New("source error"),
-	}
-	sink := new(sinkStub)
-
-	p := NewPipeline(testStage{t: t})
-	re := regexp.MustCompile("(?s).*pipeline input source: source error.*")
-	if err := p.Execute(context.TODO(), src, sink); err == nil || !re.MatchString(err.Error()) {
-		t.Errorf("Error did not match the expectation: %v", err)
-	}
-}
-
-func TestSinkErrorHandling(t *testing.T) {
-	src := &sourceStub{data: stringDataValues(3)}
-	sink := &sinkStub{err: errors.New("sink error")}
-
-	p := NewPipeline(testStage{t: t})
-	re := regexp.MustCompile("(?s).*pipeline output sink: sink error.*")
-	if err := p.Execute(context.TODO(), src, sink); err == nil || !re.MatchString(err.Error()) {
-		t.Errorf("Error did not match the expectation: %v", err)
-	}
-}
-
 func TestDataDiscarding(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(3)}
 	sink := &sinkStub{}
@@ -97,35 +73,17 @@ func TestDataDiscarding(t *testing.T) {
 	assertAllProcessed(t, src.data)
 }
 
-func TestStageRegistry(t *testing.T) {
-	src := &sourceStub{data: stringDataValues(1)}
-	sink := &sinkStub{}
+func TestDataItemCount(t *testing.T) {
+	src := &sourceStub{data: stringDataValues(1000)}
+	sink := new(sinkStub)
 
-	max := 3
-	var count int
-	task := TaskFunc(func(ctx context.Context, data Data, tp TaskParams) (Data, error) {
-		count++
-		if count > max {
-			return data, nil
-		}
-
-		// Send data to an unnamed stage
-		if count == 1 {
-			SendData(ctx, "fake", data.Clone(), tp)
-		}
-
-		SendData(ctx, "counter", data.Clone(), tp)
-		return data, nil
-	})
-
-	p := NewPipeline(FIFO("counter", task))
+	p := NewPipeline(&randomStage{t: t})
 	if err := p.Execute(context.TODO(), src, sink); err != nil {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
-	if c := count - 1; c != max {
-		t.Errorf("Retry count does not match expected value.\nWanted:%v\nGot:%v\n", max, c)
+	if num := p.DataItemCount(); num > 0 {
+		t.Errorf("Pipeline execution finished with %d pending data items", num)
 	}
-
 	assertAllProcessed(t, src.data)
 }
 
@@ -133,6 +91,46 @@ func assertAllProcessed(t *testing.T, data []Data) {
 	for i, d := range data {
 		if data := d.(*stringData); data.processed != true {
 			t.Errorf("Data %d not processed", i)
+		}
+	}
+}
+
+type randomStage struct {
+	id  string
+	t   *testing.T
+	err error
+}
+
+func (s randomStage) ID() string {
+	return s.id
+}
+
+func (s randomStage) Run(ctx context.Context, sp StageParams) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case d, ok := <-sp.Input():
+			if !ok {
+				return
+			}
+			if s.err != nil {
+				s.t.Logf("[stage %d] emit error: %v", sp.Position(), s.err)
+				sp.Error().Append(s.err)
+				return
+			}
+
+			if num := rand.Intn(2); num == 0 {
+				d.MarkAsProcessed()
+				sp.Pipeline().decDataItemCount()
+				continue
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case sp.Output() <- d:
+			}
 		}
 	}
 }
@@ -149,9 +147,6 @@ func (s testStage) ID() string {
 }
 
 func (s testStage) Run(ctx context.Context, sp StageParams) {
-	defer func() {
-		s.t.Logf("[stage %d] exiting", sp.Position())
-	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -160,20 +155,16 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 			if !ok {
 				return
 			}
-			s.t.Logf("[stage %d] received data: %v", sp.Position(), d)
 			if s.err != nil {
-				s.t.Logf("[stage %d] emit error: %v", sp.Position(), s.err)
 				sp.Error().Append(s.err)
 				return
 			}
 
 			if s.dropData {
-				s.t.Logf("[stage %d] dropping data: %v", sp.Position(), d)
 				d.MarkAsProcessed()
 				continue
 			}
 
-			s.t.Logf("[stage %d] emitting data: %v", sp.Position(), d)
 			select {
 			case <-ctx.Done():
 				return

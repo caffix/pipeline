@@ -13,6 +13,9 @@ type StageRegistry map[string]queue.Queue
 // Stage. The Pipeline passes a StageParams instance to the Run method
 // of each stage.
 type StageParams interface {
+	// Pipeline returns the pipeline executing this stage.
+	Pipeline() *Pipeline
+
 	// Position returns the position of this stage in the pipeline.
 	Position() int
 
@@ -45,7 +48,7 @@ type Stage interface {
 	Run(context.Context, StageParams)
 }
 
-type execTask func(context.Context, Data, StageParams)
+type execTask func(context.Context, Data, StageParams) (Data, error)
 
 func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	// Empty the data queue first
@@ -53,7 +56,9 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	case <-sp.DataQueue().Signal():
 		if d, ok := sp.DataQueue().Next(); ok {
 			if data, ok := d.(Data); ok {
-				task(ctx, data, sp)
+				if newdata, err := task(ctx, data, sp); err != nil || newdata == nil {
+					sp.Pipeline().decDataItemCount()
+				}
 				return true
 			}
 		}
@@ -65,14 +70,18 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	select {
 	case dataIn, ok := <-sp.Input():
 		if ok {
-			task(ctx, dataIn, sp)
+			if newdata, err := task(ctx, dataIn, sp); err != nil || newdata == nil {
+				sp.Pipeline().decDataItemCount()
+			}
 		} else if sp.DataQueue().Len() == 0 {
 			cont = false
 		}
 	case <-sp.DataQueue().Signal():
 		if d, ok := sp.DataQueue().Next(); ok {
 			if data, ok := d.(Data); ok {
-				task(ctx, data, sp)
+				if newdata, err := task(ctx, data, sp); err != nil || newdata == nil {
+					sp.Pipeline().decDataItemCount()
+				}
 			}
 		}
 	}
