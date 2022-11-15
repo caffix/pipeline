@@ -20,3 +20,19 @@ func TestSourceErrorHandling(t *testing.T) {
 		t.Errorf("Error did not match the expectation: %v", err)
 	}
 }
+
+type sourceStub struct {
+	index int
+	data  []Data
+	err   error
+}
+
+func (s *sourceStub) Next(context.Context) bool {
+	if s.err != nil || s.index == len(s.data) {
+		return false
+	}
+	s.index++
+	return true
+}
+func (s *sourceStub) Error() error { return s.err }
+func (s *sourceStub) Data() Data   { return s.data[s.index-1] }

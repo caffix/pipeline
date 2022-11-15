@@ -7,7 +7,7 @@ import (
 
 	"github.com/caffix/queue"
 	"github.com/caffix/stringset"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 )
 
 type params struct {

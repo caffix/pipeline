@@ -174,32 +174,6 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 	}
 }
 
-type sourceStub struct {
-	index int
-	data  []Data
-	err   error
-}
-
-func (s *sourceStub) Next(context.Context) bool {
-	if s.err != nil || s.index == len(s.data) {
-		return false
-	}
-	s.index++
-	return true
-}
-func (s *sourceStub) Error() error { return s.err }
-func (s *sourceStub) Data() Data   { return s.data[s.index-1] }
-
-type sinkStub struct {
-	data []Data
-	err  error
-}
-
-func (s *sinkStub) Consume(_ context.Context, d Data) error {
-	s.data = append(s.data, d)
-	return s.err
-}
-
 type stringData struct {
 	processed bool
 	val       string

@@ -17,3 +17,13 @@ func TestSinkErrorHandling(t *testing.T) {
 		t.Errorf("Error did not match the expectation: %v", err)
 	}
 }
+
+type sinkStub struct {
+	data []Data
+	err  error
+}
+
+func (s *sinkStub) Consume(_ context.Context, d Data) error {
+	s.data = append(s.data, d)
+	return s.err
+}
