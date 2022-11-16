@@ -35,8 +35,6 @@ func (r *fifo) Run(ctx context.Context, sp StageParams) {
 }
 
 func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
-	tp := &taskParams{registry: sp.Registry()}
-
 	select {
 	case <-ctx.Done():
 		data.MarkAsProcessed()
@@ -44,7 +42,10 @@ func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) (Data
 	default:
 	}
 
-	dataOut, err := r.task.Process(ctx, data, tp)
+	dataOut, err := r.task.Process(ctx, data, &taskParams{
+		pipeline: sp.Pipeline(),
+		registry: sp.Registry(),
+	})
 	if err != nil {
 		e := fmt.Errorf("pipeline stage %d: %v", sp.Position(), err)
 		sp.Error().Append(e)

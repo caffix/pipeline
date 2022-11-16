@@ -134,7 +134,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	}()
 
 	var err error
-	// Collect any emitted errors and wrap them in a multi-error
+	// Collect any emitted errors and wraps them in a multi-error
 	select {
 	case <-pCtx.Done():
 	case <-errQueue.Signal():

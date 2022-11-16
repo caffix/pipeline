@@ -105,7 +105,10 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 	go func(dataIn Data, token struct{}) {
 		defer func() { p.tokenPool <- token }()
 
-		dataOut, err := p.task.Process(ctx, dataIn, &taskParams{registry: sp.Registry()})
+		dataOut, err := p.task.Process(ctx, dataIn, &taskParams{
+			pipeline: sp.Pipeline(),
+			registry: sp.Registry(),
+		})
 		if err != nil {
 			sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			return
@@ -114,7 +117,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		// next stage there is nothing we need to do.
 		if dataOut == nil {
 			dataIn.MarkAsProcessed()
-			sp.Pipeline().decDataItemCount()
 			return
 		}
 		// Output processed data

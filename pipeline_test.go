@@ -77,11 +77,14 @@ func TestDataItemCount(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(1000)}
 	sink := new(sinkStub)
 
-	p := NewPipeline(&randomStage{t: t})
+	p := NewPipeline(&randomStage{
+		id: "first",
+		t:  t,
+	})
 	if err := p.Execute(context.TODO(), src, sink); err != nil {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
-	if num := p.DataItemCount(); num > 0 {
+	if num := p.DataItemCount(); num != 0 {
 		t.Errorf("Pipeline execution finished with %d pending data items", num)
 	}
 	assertAllProcessed(t, src.data)
@@ -106,32 +109,49 @@ func (s randomStage) ID() string {
 }
 
 func (s randomStage) Run(ctx context.Context, sp StageParams) {
+	// add data items to the stage queue
+	for i := 0; i < 1000; i++ {
+		SendData(ctx, "first", &stringData{val: fmt.Sprint(i)}, &taskParams{
+			pipeline: sp.Pipeline(),
+			registry: sp.Registry(),
+		})
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-sp.DataQueue().Signal():
+			if d, ok := sp.DataQueue().Next(); ok {
+				if data, ok := d.(Data); ok {
+					s.processData(ctx, data, sp)
+				}
+			}
 		case d, ok := <-sp.Input():
 			if !ok {
 				return
 			}
-			if s.err != nil {
-				s.t.Logf("[stage %d] emit error: %v", sp.Position(), s.err)
-				sp.Error().Append(s.err)
-				return
-			}
-
-			if num := rand.Intn(2); num == 0 {
-				d.MarkAsProcessed()
-				sp.Pipeline().decDataItemCount()
-				continue
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case sp.Output() <- d:
-			}
+			s.processData(ctx, d, sp)
 		}
+	}
+}
+
+func (s randomStage) processData(ctx context.Context, d Data, sp StageParams) {
+	if s.err != nil {
+		s.t.Logf("[stage %d] emit error: %v", sp.Position(), s.err)
+		sp.Error().Append(s.err)
+		return
+	}
+
+	if num := rand.Intn(2); num == 0 {
+		d.MarkAsProcessed()
+		_ = sp.Pipeline().decDataItemCount()
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+	case sp.Output() <- d:
 	}
 }
 

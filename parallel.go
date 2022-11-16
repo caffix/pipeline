@@ -58,7 +58,10 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (
 		}
 
 		go func(idx int, clone Data) {
-			d, err := p.tasks[idx].Process(ctx, clone, &taskParams{registry: sp.Registry()})
+			d, err := p.tasks[idx].Process(ctx, clone, &taskParams{
+				pipeline: sp.Pipeline(),
+				registry: sp.Registry(),
+			})
 			if err != nil {
 				sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			}

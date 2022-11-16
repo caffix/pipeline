@@ -8,6 +8,9 @@ import (
 // The Stage passes a TaskParams instance to the Process method of
 // each task.
 type TaskParams interface {
+	// Pipeline returns the pipeline executing this task.
+	Pipeline() *Pipeline
+
 	// Registry returns a map of stage names to stage input channels.
 	Registry() StageRegistry
 }
@@ -39,12 +42,15 @@ func SendData(ctx context.Context, stage string, data Data, tp TaskParams) {
 	}
 
 	if q, found := tp.Registry()[stage]; found {
+		_ = tp.Pipeline().incDataItemCount()
 		q.Append(data)
 	}
 }
 
 type taskParams struct {
+	pipeline *Pipeline
 	registry StageRegistry
 }
 
+func (tp *taskParams) Pipeline() *Pipeline     { return tp.pipeline }
 func (tp *taskParams) Registry() StageRegistry { return tp.registry }
