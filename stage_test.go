@@ -33,6 +33,4 @@ func TestStageRegistry(t *testing.T) {
 	if c := count - 1; c != max {
 		t.Errorf("Retry count does not match expected value.\nWanted:%v\nGot:%v\n", max, c)
 	}
-
-	assertAllProcessed(t, src.data)
 }

@@ -42,20 +42,14 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
-		data.MarkAsProcessed()
+		_ = sp.Pipeline().decDataItemCount()
 		return nil, nil
 	default:
 	}
 
 	done := make(chan Data, len(p.tasks))
 	for i := 0; i < len(p.tasks); i++ {
-		c := data.Clone()
-
-		select {
-		case <-ctx.Done():
-			return nil, nil
-		default:
-		}
+		_ = sp.Pipeline().incDataItemCount()
 
 		go func(idx int, clone Data) {
 			d, err := p.tasks[idx].Process(ctx, clone, &taskParams{
@@ -65,19 +59,19 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (
 			if err != nil {
 				sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			}
-			clone.MarkAsProcessed()
 			done <- d
-		}(i, c)
+		}(i, data.Clone())
 	}
 
 	var failed bool
 	for i := 0; i < len(p.tasks); i++ {
 		if d := <-done; d == nil {
+			_ = sp.Pipeline().decDataItemCount()
 			failed = true
 		}
 	}
 	if failed {
-		data.MarkAsProcessed()
+		_ = sp.Pipeline().decDataItemCount()
 		return nil, nil
 	}
 

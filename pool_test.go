@@ -90,6 +90,4 @@ func TestDynamicWorkerPool(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Errorf("timed out waiting for pipeline to complete")
 	}
-
-	assertAllProcessed(t, src.data)
 }

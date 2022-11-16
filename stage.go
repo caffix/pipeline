@@ -56,9 +56,7 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	case <-sp.DataQueue().Signal():
 		if d, ok := sp.DataQueue().Next(); ok {
 			if data, ok := d.(Data); ok {
-				if newdata, err := task(ctx, data, sp); err != nil || newdata == nil {
-					_ = sp.Pipeline().decDataItemCount()
-				}
+				_, _ = task(ctx, data, sp)
 				return true
 			}
 		}
@@ -70,18 +68,14 @@ func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
 	select {
 	case dataIn, ok := <-sp.Input():
 		if ok {
-			if newdata, err := task(ctx, dataIn, sp); err != nil || newdata == nil {
-				_ = sp.Pipeline().decDataItemCount()
-			}
+			_, _ = task(ctx, dataIn, sp)
 		} else if sp.DataQueue().Len() == 0 {
 			cont = false
 		}
 	case <-sp.DataQueue().Signal():
 		if d, ok := sp.DataQueue().Next(); ok {
 			if data, ok := d.(Data); ok {
-				if newdata, err := task(ctx, data, sp); err != nil || newdata == nil {
-					_ = sp.Pipeline().decDataItemCount()
-				}
+				_, _ = task(ctx, data, sp)
 			}
 		}
 	}

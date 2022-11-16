@@ -43,6 +43,4 @@ func TestParallel(t *testing.T) {
 	if err := p.Execute(context.TODO(), src, sink); err != nil {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
-
-	assertAllProcessed(t, src.data)
 }

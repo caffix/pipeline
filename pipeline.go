@@ -205,8 +205,6 @@ func (p *Pipeline) outputSinkRunner(ctx context.Context, sink OutputSink, inCh <
 				errQueue.Append(fmt.Errorf("pipeline output sink: %v", err))
 				return
 			}
-
-			data.MarkAsProcessed()
 			_ = p.decDataItemCount()
 		}
 	}

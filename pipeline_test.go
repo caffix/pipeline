@@ -26,8 +26,6 @@ func TestDataFlow(t *testing.T) {
 	if !reflect.DeepEqual(sink.data, src.data) {
 		t.Errorf("Data does not match.\nWanted:%v\nGot:%v\n", src.data, sink.data)
 	}
-
-	assertAllProcessed(t, src.data)
 }
 
 func TestTaskErrorHandling(t *testing.T) {
@@ -55,24 +53,6 @@ func TestTaskErrorHandling(t *testing.T) {
 	}
 }
 
-func TestDataDiscarding(t *testing.T) {
-	src := &sourceStub{data: stringDataValues(3)}
-	sink := &sinkStub{}
-
-	p := NewPipeline(&testStage{
-		t:        t,
-		dropData: true,
-	})
-	if err := p.Execute(context.TODO(), src, sink); err != nil {
-		t.Errorf("Error executing the Pipeline: %v", err)
-	}
-	if len(sink.data) != 0 {
-		t.Errorf("Expected all data to be discarded by stage task")
-	}
-
-	assertAllProcessed(t, src.data)
-}
-
 func TestDataItemCount(t *testing.T) {
 	src := &sourceStub{data: stringDataValues(1000)}
 	sink := new(sinkStub)
@@ -86,15 +66,6 @@ func TestDataItemCount(t *testing.T) {
 	}
 	if num := p.DataItemCount(); num != 0 {
 		t.Errorf("Pipeline execution finished with %d pending data items", num)
-	}
-	assertAllProcessed(t, src.data)
-}
-
-func assertAllProcessed(t *testing.T, data []Data) {
-	for i, d := range data {
-		if data := d.(*stringData); data.processed != true {
-			t.Errorf("Data %d not processed", i)
-		}
 	}
 }
 
@@ -144,7 +115,6 @@ func (s randomStage) processData(ctx context.Context, d Data, sp StageParams) {
 	}
 
 	if num := rand.Intn(2); num == 0 {
-		d.MarkAsProcessed()
 		_ = sp.Pipeline().decDataItemCount()
 		return
 	}
@@ -181,7 +151,7 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 			}
 
 			if s.dropData {
-				d.MarkAsProcessed()
+				_ = sp.Pipeline().decDataItemCount()
 				continue
 			}
 
@@ -195,13 +165,11 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 }
 
 type stringData struct {
-	processed bool
-	val       string
+	val string
 }
 
-func (s *stringData) Clone() Data      { return &stringData{val: s.val} }
-func (s *stringData) MarkAsProcessed() { s.processed = true }
-func (s *stringData) String() string   { return s.val }
+func (s *stringData) Clone() Data    { return &stringData{val: s.val} }
+func (s *stringData) String() string { return s.val }
 
 func stringDataValues(num int) []Data {
 	out := make([]Data, num)

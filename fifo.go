@@ -37,7 +37,7 @@ func (r *fifo) Run(ctx context.Context, sp StageParams) {
 func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
-		data.MarkAsProcessed()
+		_ = sp.Pipeline().decDataItemCount()
 		return nil, nil
 	default:
 	}
@@ -54,7 +54,7 @@ func (r *fifo) executeTask(ctx context.Context, data Data, sp StageParams) (Data
 	// If the task did not output data for the
 	// next stage there is nothing we need to do
 	if dataOut == nil {
-		data.MarkAsProcessed()
+		_ = sp.Pipeline().decDataItemCount()
 		return nil, nil
 	}
 	// Output processed data

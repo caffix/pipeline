@@ -22,8 +22,6 @@ func TestFIFO(t *testing.T) {
 	if !reflect.DeepEqual(sink.data, src.data) {
 		t.Errorf("Data does not match.\nWanted:%v\nGot:%v\n", src.data, sink.data)
 	}
-
-	assertAllProcessed(t, src.data)
 }
 
 func makePassthroughTask() Task {

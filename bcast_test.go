@@ -23,13 +23,7 @@ func TestBroadcast(t *testing.T) {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
 
-	data := []Data{
-		&stringData{val: "0_0", processed: true},
-		&stringData{val: "0_1", processed: true},
-		&stringData{val: "0_2", processed: true},
-	}
-	assertAllProcessed(t, src.data)
-
+	data := []Data{&stringData{val: "0_0"}, &stringData{val: "0_1"}, &stringData{val: "0_2"}}
 	// Tasks run as goroutines so outputs will be shuffled. We need
 	// to sort them first so we can check for equality.
 	sort.Slice(data, func(i, j int) bool {
