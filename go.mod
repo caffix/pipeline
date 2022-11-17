@@ -3,7 +3,7 @@ module github.com/caffix/pipeline
 go 1.18
 
 require (
-	github.com/caffix/queue v0.1.4-0.20220914052144-9c8ccf1d8002
+	github.com/caffix/queue v0.1.4-0.20221117050542-621305ceff1f
 	github.com/caffix/stringset v0.1.1-0.20220914051654-14e33fbe8739
 	github.com/hashicorp/go-multierror v1.1.1
 )
