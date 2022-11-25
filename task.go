@@ -42,7 +42,7 @@ func SendData(ctx context.Context, stage string, data Data, tp TaskParams) {
 	}
 
 	if q, found := tp.Registry()[stage]; found {
-		_ = tp.Pipeline().incDataItemCount()
+		_ = tp.Pipeline().IncDataItemCount()
 		q.Append(data)
 	}
 }
