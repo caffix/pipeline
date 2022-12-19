@@ -51,18 +51,6 @@ type Stage interface {
 type execTask func(context.Context, Data, StageParams) (Data, error)
 
 func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
-	// Empty the data queue first
-	select {
-	case <-sp.DataQueue().Signal():
-		if d, ok := sp.DataQueue().Next(); ok {
-			if data, ok := d.(Data); ok {
-				_, _ = task(ctx, data, sp)
-				return true
-			}
-		}
-	default:
-	}
-
 	cont := true
 	// Processes data from the input channel and data queue
 	select {
