@@ -74,7 +74,6 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 func (b *broadcast) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
-		_ = sp.Pipeline().DecDataItemCount()
 		return nil, nil
 	default:
 	}

@@ -97,7 +97,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 
 	select {
 	case <-ctx.Done():
-		_ = sp.Pipeline().DecDataItemCount()
 		return nil, nil
 	case token = <-p.tokenPool:
 	}
@@ -116,7 +115,6 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		// If the task did not output data for the
 		// next stage there is nothing we need to do.
 		if dataOut == nil {
-			_ = sp.Pipeline().DecDataItemCount()
 			return
 		}
 		// Output processed data

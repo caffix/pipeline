@@ -115,7 +115,6 @@ func (s randomStage) processData(ctx context.Context, d Data, sp StageParams) {
 	}
 
 	if num := rand.Intn(2); num == 0 {
-		_ = sp.Pipeline().DecDataItemCount()
 		return
 	}
 
@@ -151,7 +150,6 @@ func (s testStage) Run(ctx context.Context, sp StageParams) {
 			}
 
 			if s.dropData {
-				_ = sp.Pipeline().DecDataItemCount()
 				continue
 			}
 

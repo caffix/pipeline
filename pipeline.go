@@ -38,8 +38,8 @@ func (p *params) Registry() StageRegistry    { return p.registry }
 // or more Stage instances for processing.
 type Pipeline struct {
 	sync.Mutex
-	dataItemCount int
-	stages        []Stage
+	stages      []Stage
+	stageParams []*params
 }
 
 // NewPipeline returns a new data pipeline instance where input
@@ -101,7 +101,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 	for i := 0; i < len(p.stages); i++ {
 		wg.Add(1)
 		go func(idx int) {
-			p.stages[idx].Run(pCtx, &params{
+			sparams := &params{
 				pipeline:  p,
 				stage:     idx + 1,
 				inCh:      stageCh[idx],
@@ -109,7 +109,11 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				dataQueue: stageQueue[idx],
 				errQueue:  errQueue,
 				registry:  registry,
-			})
+			}
+			p.Lock()
+			p.stageParams = append(p.stageParams, sparams)
+			p.Unlock()
+			p.stages[idx].Run(pCtx, sparams)
 			// Tell the next Stage that no more Data is available
 			close(stageCh[idx+1])
 			wg.Done()
@@ -152,25 +156,11 @@ func (p *Pipeline) DataItemCount() int {
 	p.Lock()
 	defer p.Unlock()
 
-	return p.dataItemCount
-}
-
-// IncDataItemCount increments the count and returns the number of items on the pipeline.
-func (p *Pipeline) IncDataItemCount() int {
-	p.Lock()
-	defer p.Unlock()
-
-	p.dataItemCount++
-	return p.dataItemCount
-}
-
-// DecDataItemCount decrements the count and returns the number of items on the pipeline.
-func (p *Pipeline) DecDataItemCount() int {
-	p.Lock()
-	defer p.Unlock()
-
-	p.dataItemCount--
-	return p.dataItemCount
+	var count int
+	for _, p := range p.stageParams {
+		count += len(p.Input()) + p.DataQueue().Len()
+	}
+	return count
 }
 
 // inputSourceRunner drives the InputSource to continue providing
@@ -183,7 +173,6 @@ func (p *Pipeline) inputSourceRunner(ctx context.Context, src InputSource, outCh
 		case <-ctx.Done():
 			return
 		case outCh <- data:
-			_ = p.IncDataItemCount()
 		}
 	}
 	// Check for errors
@@ -205,7 +194,6 @@ func (p *Pipeline) outputSinkRunner(ctx context.Context, sink OutputSink, inCh <
 				errQueue.Append(fmt.Errorf("pipeline output sink: %v", err))
 				return
 			}
-			_ = p.DecDataItemCount()
 		}
 	}
 }

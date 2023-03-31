@@ -42,15 +42,12 @@ func (p *parallel) Run(ctx context.Context, sp StageParams) {
 func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
 	select {
 	case <-ctx.Done():
-		_ = sp.Pipeline().DecDataItemCount()
 		return nil, nil
 	default:
 	}
 
 	done := make(chan Data, len(p.tasks))
 	for i := 0; i < len(p.tasks); i++ {
-		_ = sp.Pipeline().IncDataItemCount()
-
 		go func(idx int, clone Data) {
 			d, err := p.tasks[idx].Process(ctx, clone, &taskParams{
 				pipeline: sp.Pipeline(),
@@ -66,12 +63,10 @@ func (p *parallel) executeTask(ctx context.Context, data Data, sp StageParams) (
 	var failed bool
 	for i := 0; i < len(p.tasks); i++ {
 		if d := <-done; d == nil {
-			_ = sp.Pipeline().DecDataItemCount()
 			failed = true
 		}
 	}
 	if failed {
-		_ = sp.Pipeline().DecDataItemCount()
 		return nil, nil
 	}
 
