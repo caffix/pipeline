@@ -62,15 +62,15 @@ func DynamicPool(id string, task Task, max int) Stage {
 		return nil
 	}
 
-	tokenPool := make(chan struct{}, max)
-	for i := 0; i < max; i++ {
-		tokenPool <- struct{}{}
+	tp := make(chan struct{}, max)
+	for i := 0; i < cap(tp); i++ {
+		tp <- struct{}{}
 	}
 
 	return &dynamicPool{
 		id:        id,
 		task:      task,
-		tokenPool: tokenPool,
+		tokenPool: tp,
 	}
 }
 
@@ -93,21 +93,20 @@ func (p *dynamicPool) Run(ctx context.Context, sp StageParams) {
 }
 
 func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams) (Data, error) {
-	var token struct{}
-
 	select {
 	case <-ctx.Done():
 		return nil, nil
-	case token = <-p.tokenPool:
+	case <-p.tokenPool:
 	}
 
-	go func(dataIn Data, token struct{}) {
-		defer func() { p.tokenPool <- token }()
+	go func(dataIn Data) {
+		defer func() { p.tokenPool <- struct{}{} }()
 
 		dataOut, err := p.task.Process(ctx, dataIn, &taskParams{
 			pipeline: sp.Pipeline(),
 			registry: sp.Registry(),
 		})
+
 		if err != nil {
 			sp.Error().Append(fmt.Errorf("pipeline stage %d: %v", sp.Position(), err))
 			return
@@ -122,7 +121,7 @@ func (p *dynamicPool) executeTask(ctx context.Context, data Data, sp StageParams
 		case <-ctx.Done():
 		case sp.Output() <- dataOut:
 		}
-	}(data, token)
+	}(data)
 
 	return data, nil
 }

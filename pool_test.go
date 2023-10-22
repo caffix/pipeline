@@ -109,10 +109,10 @@ func BenchmarkOneDynamicPool(b *testing.B) {
 	task := TaskFunc(func(_ context.Context, _ Data, _ TaskParams) (Data, error) {
 		return nil, nil
 	})
-	p := NewPipeline(DynamicPool("", task, 1))
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
+		p := NewPipeline(DynamicPool("", task, 1))
 		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
 		_ = p.Execute(context.TODO(), src, sink)
 	}
