@@ -37,15 +37,21 @@ func TestBroadcast(t *testing.T) {
 	}
 }
 
-func BenchmarkOneBroadcast(b *testing.B) {
+func BenchmarkBroadcast(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewPipeline(Broadcast("", makePassthroughTask()))
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, new(sinkStub))
+	}
+}
+
+func BenchmarkBroadcastDataElements(b *testing.B) {
 	sink := new(sinkStub)
+	src := &sourceStub{data: stringDataValues(b.N)}
 	p := NewPipeline(Broadcast("", makePassthroughTask()))
 
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
-		_ = p.Execute(context.TODO(), src, sink)
-	}
+	_ = p.Execute(context.TODO(), src, sink)
 	b.StopTimer()
 }
 

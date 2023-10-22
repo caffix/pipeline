@@ -92,29 +92,38 @@ func TestDynamicWorkerPool(t *testing.T) {
 	}
 }
 
-func BenchmarkOneFixedPool(b *testing.B) {
+func BenchmarkFixedPool(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewPipeline(FixedPool("", makePassthroughTask(), 1))
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, new(sinkStub))
+	}
+}
+
+func BenchmarkFixedPoolDataElements(b *testing.B) {
 	sink := new(sinkStub)
-	p := NewPipeline(FixedPool("", makePassthroughTask(), 1))
+	src := &sourceStub{data: stringDataValues(b.N)}
+	p := NewPipeline(FixedPool("", makePassthroughTask(), 100))
 
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
-		_ = p.Execute(context.TODO(), src, sink)
-	}
+	_ = p.Execute(context.TODO(), src, sink)
 	b.StopTimer()
 }
 
-func BenchmarkOneDynamicPool(b *testing.B) {
+func BenchmarkDynamicPool(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewPipeline(DynamicPool("", makePassthroughTask(), 1))
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, new(sinkStub))
+	}
+}
+
+func BenchmarkDynamicPoolDataElements(b *testing.B) {
 	sink := new(sinkStub)
-	task := TaskFunc(func(_ context.Context, _ Data, _ TaskParams) (Data, error) {
-		return nil, nil
-	})
+	src := &sourceStub{data: stringDataValues(b.N)}
+	p := NewPipeline(DynamicPool("", makePassthroughTask(), 1000))
 
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		p := NewPipeline(DynamicPool("", task, 1))
-		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
-		_ = p.Execute(context.TODO(), src, sink)
-	}
+	_ = p.Execute(context.TODO(), src, sink)
 	b.StopTimer()
 }

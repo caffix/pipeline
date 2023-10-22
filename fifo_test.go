@@ -24,15 +24,21 @@ func TestFIFO(t *testing.T) {
 	}
 }
 
-func BenchmarkOneFIFO(b *testing.B) {
+func BenchmarkFIFO(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewPipeline(FIFO("", makePassthroughTask()))
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, new(sinkStub))
+	}
+}
+
+func BenchmarkFIFODataElements(b *testing.B) {
 	sink := new(sinkStub)
+	src := &sourceStub{data: stringDataValues(b.N)}
 	p := NewPipeline(FIFO("", makePassthroughTask()))
 
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
-		_ = p.Execute(context.TODO(), src, sink)
-	}
+	_ = p.Execute(context.TODO(), src, sink)
 	b.StopTimer()
 }
 

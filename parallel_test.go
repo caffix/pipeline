@@ -45,14 +45,20 @@ func TestParallel(t *testing.T) {
 	}
 }
 
-func BenchmarkOneParallel(b *testing.B) {
+func BenchmarkParallel(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewPipeline(Parallel("", makePassthroughTask()))
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, new(sinkStub))
+	}
+}
+
+func BenchmarkParallelDataElements(b *testing.B) {
 	sink := new(sinkStub)
+	src := &sourceStub{data: stringDataValues(b.N)}
 	p := NewPipeline(Parallel("", makePassthroughTask()))
 
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
-		_ = p.Execute(context.TODO(), src, sink)
-	}
+	_ = p.Execute(context.TODO(), src, sink)
 	b.StopTimer()
 }
