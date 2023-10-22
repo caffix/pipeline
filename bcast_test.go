@@ -37,6 +37,18 @@ func TestBroadcast(t *testing.T) {
 	}
 }
 
+func BenchmarkOneBroadcast(b *testing.B) {
+	sink := new(sinkStub)
+	p := NewPipeline(Broadcast("", makePassthroughTask()))
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, sink)
+	}
+	b.StopTimer()
+}
+
 func makeMutatingTask(index int) Task {
 	return TaskFunc(func(_ context.Context, d Data, _ TaskParams) (Data, error) {
 		// Mutate data to check that each task got a copy

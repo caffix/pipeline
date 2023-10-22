@@ -24,6 +24,18 @@ func TestFIFO(t *testing.T) {
 	}
 }
 
+func BenchmarkOneFIFO(b *testing.B) {
+	sink := new(sinkStub)
+	p := NewPipeline(FIFO("", makePassthroughTask()))
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, sink)
+	}
+	b.StopTimer()
+}
+
 func makePassthroughTask() Task {
 	return TaskFunc(func(_ context.Context, data Data, _ TaskParams) (Data, error) {
 		return data, nil

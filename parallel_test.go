@@ -44,3 +44,15 @@ func TestParallel(t *testing.T) {
 		t.Errorf("Error executing the Pipeline: %v", err)
 	}
 }
+
+func BenchmarkOneParallel(b *testing.B) {
+	sink := new(sinkStub)
+	p := NewPipeline(Parallel("", makePassthroughTask()))
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, sink)
+	}
+	b.StopTimer()
+}

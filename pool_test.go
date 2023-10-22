@@ -91,3 +91,30 @@ func TestDynamicWorkerPool(t *testing.T) {
 		t.Errorf("timed out waiting for pipeline to complete")
 	}
 }
+
+func BenchmarkOneFixedPool(b *testing.B) {
+	sink := new(sinkStub)
+	p := NewPipeline(FixedPool("", makePassthroughTask(), 1))
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, sink)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkOneDynamicPool(b *testing.B) {
+	sink := new(sinkStub)
+	task := TaskFunc(func(_ context.Context, _ Data, _ TaskParams) (Data, error) {
+		return nil, nil
+	})
+	p := NewPipeline(DynamicPool("", task, 1))
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		src := &sourceStub{data: []Data{&stringData{val: "benchmark"}}}
+		_ = p.Execute(context.TODO(), src, sink)
+	}
+	b.StopTimer()
+}
