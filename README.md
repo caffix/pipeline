@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/github/license/caffix/pipeline)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Go Report](https://goreportcard.com/badge/github.com/caffix/pipeline)](https://goreportcard.com/report/github.com/caffix/pipeline)
 [![CodeFactor](https://www.codefactor.io/repository/github/caffix/pipeline/badge)](https://www.codefactor.io/repository/github/caffix/pipeline)
-[![Codecov](https://codecov.io/gh/caffix/pipeline/branch/master/graph/badge.svg)](https://codecov.io/gh/caffix/pipeline)
 [![Follow on Twitter](https://img.shields.io/twitter/follow/jeff_foley.svg?logo=twitter)](https://twitter.com/jeff_foley)
 
 Simple asynchronous data pipeline written in Go with support for concurrent tasks at each stage.
@@ -138,7 +137,7 @@ No logging is built into this pipeline implementation and this could be quite us
 
 ### Metrics and Monitoring
 
-It would be helpful to have the ability to monitor stage and task performance such as how long each is taking to execute, the number of Data instances processes, the number of successes and failures, etc.
+It would be helpful to have the ability to monitor stage and task performance such as how long each is taking to execute, the number of Data instances processed, the number of successes and failures, etc.
 
 ### Task Implementations for Common Use Cases
 
