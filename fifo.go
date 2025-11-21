@@ -27,10 +27,7 @@ func (r *fifo) ID() string {
 
 // Run implements Stage.
 func (r *fifo) Run(ctx context.Context, sp StageParams) {
-	for {
-		if !processStageData(ctx, sp, r.executeTask) {
-			break
-		}
+	for processStageData(ctx, sp, r.executeTask) {
 	}
 }
 

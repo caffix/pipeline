@@ -17,29 +17,23 @@ type params struct {
 	outCh     chan<- Data
 	dataQueue queue.Queue
 	errQueue  queue.Queue
-	newdata   chan<- Data
-	processed chan<- Data
 	registry  StageRegistry
 }
 
-func (p *params) Pipeline() *Pipeline        { return p.pipeline }
-func (p *params) Position() int              { return p.stage }
-func (p *params) Input() <-chan Data         { return p.inCh }
-func (p *params) Output() chan<- Data        { return p.outCh }
-func (p *params) DataQueue() queue.Queue     { return p.dataQueue }
-func (p *params) Error() queue.Queue         { return p.errQueue }
-func (p *params) NewData() chan<- Data       { return p.newdata }
-func (p *params) ProcessedData() chan<- Data { return p.processed }
-func (p *params) Registry() StageRegistry    { return p.registry }
+func (p *params) Pipeline() *Pipeline     { return p.pipeline }
+func (p *params) Position() int           { return p.stage }
+func (p *params) Input() <-chan Data      { return p.inCh }
+func (p *params) Output() chan<- Data     { return p.outCh }
+func (p *params) DataQueue() queue.Queue  { return p.dataQueue }
+func (p *params) Error() queue.Queue      { return p.errQueue }
+func (p *params) Registry() StageRegistry { return p.registry }
 
 // Pipeline is an abstract and extendable asynchronous data
 // pipeline with concurrent tasks at each stage. Each pipeline
 // is constructed from an InputSource, an OutputSink, and zero
 // or more Stage instances for processing.
 type Pipeline struct {
-	sync.Mutex
-	stages      []Stage
-	stageParams []*params
+	stages []Stage
 }
 
 // NewPipeline returns a new data pipeline instance where input
@@ -110,9 +104,7 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 				errQueue:  errQueue,
 				registry:  registry,
 			}
-			p.Lock()
-			p.stageParams = append(p.stageParams, sparams)
-			p.Unlock()
+
 			p.stages[idx].Run(pCtx, sparams)
 			// Tell the next Stage that no more Data is available
 			close(stageCh[idx+1])
@@ -148,19 +140,14 @@ func (p *Pipeline) ExecuteBuffered(ctx context.Context, src InputSource, sink Ou
 			}
 		})
 	}
-	return err
-}
 
-// DataItemCount returns the number of data items currently on the pipeline.
-func (p *Pipeline) DataItemCount() int {
-	p.Lock()
-	defer p.Unlock()
-
-	var count int
-	for _, p := range p.stageParams {
-		count += len(p.Input()) + p.DataQueue().Len()
+	// Clean up the stage queues
+	for i := 0; i < len(p.stages); i++ {
+		stageQueue[i].Process(func(item any) {
+			err = multierror.Append(err, fmt.Errorf("unprocessed data in stage %d", i+1))
+		})
 	}
-	return count
+	return err
 }
 
 // inputSourceRunner drives the InputSource to continue providing

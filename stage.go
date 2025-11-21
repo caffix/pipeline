@@ -6,7 +6,7 @@ import (
 	"github.com/caffix/queue"
 )
 
-// StageRegistry is a map of stage identifiers to input channels.
+// StageRegistry is a map of stage labels to data queues.
 type StageRegistry map[string]queue.Queue
 
 // StageParams provides the information needed for executing a pipeline
@@ -51,21 +51,28 @@ type Stage interface {
 type execTask func(context.Context, Data, StageParams) (Data, error)
 
 func processStageData(ctx context.Context, sp StageParams, task execTask) bool {
-	cont := true
-	// Processes data from the input channel and data queue
-	select {
-	case dataIn, ok := <-sp.Input():
-		if ok {
-			_, _ = task(ctx, dataIn, sp)
-		} else if sp.DataQueue().Len() == 0 {
-			cont = false
-		}
-	case <-sp.DataQueue().Signal():
+	fromQueue := func() {
 		if d, ok := sp.DataQueue().Next(); ok {
-			if data, ok := d.(Data); ok {
+			if data, valid := d.(Data); valid {
 				_, _ = task(ctx, data, sp)
 			}
 		}
 	}
-	return cont
+
+	// Process items from the input channel and data queue
+	select {
+	case in, open := <-sp.Input():
+		if open {
+			_, _ = task(ctx, in, sp)
+			return true
+		} else if sp.DataQueue().Len() > 0 {
+			fromQueue()
+			return true
+		}
+	case <-sp.DataQueue().Signal():
+		fromQueue()
+		return true
+	}
+
+	return false
 }

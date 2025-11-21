@@ -81,10 +81,7 @@ func (p *dynamicPool) ID() string {
 
 // Run implements Stage.
 func (p *dynamicPool) Run(ctx context.Context, sp StageParams) {
-	for {
-		if !processStageData(ctx, sp, p.executeTask) {
-			break
-		}
+	for processStageData(ctx, sp, p.executeTask) {
 	}
 	// Wait for all workers to exit by trying to empty the token pool
 	for i := 0; i < cap(p.tokenPool); i++ {

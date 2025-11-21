@@ -32,10 +32,7 @@ func (p *parallel) ID() string {
 
 // Run implements Stage.
 func (p *parallel) Run(ctx context.Context, sp StageParams) {
-	for {
-		if !processStageData(ctx, sp, p.executeTask) {
-			break
-		}
+	for processStageData(ctx, sp, p.executeTask) {
 	}
 }
 

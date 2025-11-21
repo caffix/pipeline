@@ -58,11 +58,8 @@ func (b *broadcast) Run(ctx context.Context, sp StageParams) {
 		}(i)
 	}
 
-	for {
-		// Read incoming data and pass them to each FIFO
-		if !processStageData(ctx, sp, b.executeTask) {
-			break
-		}
+	// Read incoming data and pass them to each FIFO
+	for processStageData(ctx, sp, b.executeTask) {
 	}
 	// Close input channels and wait for FIFOs to exit
 	for _, ch := range b.inChs {
