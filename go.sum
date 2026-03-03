@@ -1,7 +1,7 @@
-github.com/caffix/queue v0.4.0 h1:bwy0rCyppFk0gS38/pNxW/dk1b9gYVddpa30p6WnOYM=
-github.com/caffix/queue v0.4.0/go.mod h1:YUMHaAiT5HiZeJylaaCXCko1FW9LV7WNfw5EjWVWdo0=
-github.com/caffix/stringset v0.2.1-0.20251119025138-9044e6b53d5b h1:zJbdnhRVCLJrV559afg3YU5rci0vL2i0UoARxf3TzPQ=
-github.com/caffix/stringset v0.2.1-0.20251119025138-9044e6b53d5b/go.mod h1:dnXtfiDQ0Q5appncY9XoLiy+jGv+ET+Dv7D40BISIBU=
+github.com/caffix/queue v0.4.1-0.20260303044231-38e3190f084d h1:gOj4O04Z7gIg/EMM3r/Yobzhu15btgCDvcH+uOZfCv8=
+github.com/caffix/queue v0.4.1-0.20260303044231-38e3190f084d/go.mod h1:TG0xRz5IXKbo/YDDBlHTGYWVvO6RES2yqBXF+xuP0wg=
+github.com/caffix/stringset v0.2.1-0.20260303042913-c1dce569c290 h1:dW8bxf12VhfzIKIIsEDLMvTzR8Ts2fLLOplo+nNuwes=
+github.com/caffix/stringset v0.2.1-0.20260303042913-c1dce569c290/go.mod h1:7vfonc1Ha23yE4MutmEjnP/DD9w6yMB+n9Frr4URfeU=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
