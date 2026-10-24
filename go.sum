@@ -1,9 +1,6 @@
-github.com/caffix/queue v0.4.1-0.20260303044231-38e3190f084d h1:gOj4O04Z7gIg/EMM3r/Yobzhu15btgCDvcH+uOZfCv8=
-github.com/caffix/queue v0.4.1-0.20260303044231-38e3190f084d/go.mod h1:TG0xRz5IXKbo/YDDBlHTGYWVvO6RES2yqBXF+xuP0wg=
-github.com/caffix/stringset v0.2.1-0.20260303042913-c1dce569c290 h1:dW8bxf12VhfzIKIIsEDLMvTzR8Ts2fLLOplo+nNuwes=
-github.com/caffix/stringset v0.2.1-0.20260303042913-c1dce569c290/go.mod h1:7vfonc1Ha23yE4MutmEjnP/DD9w6yMB+n9Frr4URfeU=
-github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
-github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
-github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
-github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
-github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
+github.com/caffix/queue v0.4.1-0.20261024025115-6facdac4cb31 h1:KOSQh/Sf0l71G0GQtwychqrYYPP+q8xxUkN9cV1ZjGc=
+github.com/caffix/queue v0.4.1-0.20261024025115-6facdac4cb31/go.mod h1:GJtajiY/BiO/pFRmsD4BZhVyBBnQvI9do5Fy0iuQb1s=
+github.com/caffix/stringset v0.2.1-0.20261024023700-d473a986fc28 h1:CeG0GZNSaeHGYko8onifjYiOopIgzetFh4WN3FnEcm4=
+github.com/caffix/stringset v0.2.1-0.20261024023700-d473a986fc28/go.mod h1:DXymjXjZ64yAlPi7zxDmmz0wNI48pjuOALBf2QJkL18=
+github.com/hashicorp/go-multierror v1.1.2-0.20261014074630-1fda6a371bee h1:tizEMnVGxIF8GvFLWeoQH6QP1O+gkn5AYTA7DmjE5l8=
+github.com/hashicorp/go-multierror v1.1.2-0.20261014074630-1fda6a371bee/go.mod h1:RYOtqYU2MvOrqUMooJlQoFFuqR6sazGdm1ubZTL++r8=

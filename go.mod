@@ -1,11 +1,9 @@
 module github.com/caffix/pipeline
 
-go 1.26.0
+go 1.27.3
 
 require (
-	github.com/caffix/queue v0.4.1-0.20260303044231-38e3190f084d
-	github.com/caffix/stringset v0.2.1-0.20260303042913-c1dce569c290
-	github.com/hashicorp/go-multierror v1.1.1
+	github.com/caffix/queue v0.4.1-0.20261024025115-6facdac4cb31
+	github.com/caffix/stringset v0.2.1-0.20261024023700-d473a986fc28
+	github.com/hashicorp/go-multierror v1.1.2-0.20261014074630-1fda6a371bee
 )
-
-require github.com/hashicorp/errwrap v1.1.0 // indirect
